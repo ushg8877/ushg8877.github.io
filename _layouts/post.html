@@ -2,3 +2,5 @@
 layout: default
 ---
 <article class="reading"><a class="back" href="/">← 所有文章</a><header class="post-header"><time>{{ page.date | date: '%Y 年 %m 月 %d 日' }}</time><h1>{{ page.title | escape }}</h1><div class="tags">{% for tag in page.tags %}<span>{{ tag | escape }}</span>{% endfor %}</div></header><div class="prose">{{ content }}</div><div class="post-end">— END —</div></article>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js"></script>

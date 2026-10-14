@@ -5,6 +5,8 @@ lang: zh-CN
 timezone: Asia/Shanghai
 permalink: /posts/:title/
 markdown: kramdown
+kramdown:
+  math_engine: null
 exclude: [README.md, Gemfile, Gemfile.lock]
 defaults:
   - scope:
