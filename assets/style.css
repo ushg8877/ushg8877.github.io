@@ -2,6 +2,6 @@
 
 #hero-quote{font-family:"Yu Mincho","Noto Serif JP",serif;font-size:clamp(19px,2vw,24px);line-height:1.65;letter-spacing:.025em;max-width:830px;overflow-wrap:anywhere;font-weight:600}@media(max-width:600px){#hero-quote{font-size:20px}}
 
-.hero-heading{font-size:clamp(19px,2vw,24px);line-height:1.8;letter-spacing:0}.song-link{display:inline-block;margin-left:.7em;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:13px;font-weight:400;letter-spacing:0;color:var(--accent);text-decoration:underline;text-underline-offset:4px;vertical-align:baseline}
+.hero-heading{font-size:clamp(19px,2vw,24px);line-height:1.8;letter-spacing:0;text-align:center}.song-link{display:inline-block;margin-left:.7em;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:13px;font-weight:400;letter-spacing:0;color:var(--accent);text-decoration:underline;text-underline-offset:4px;vertical-align:baseline}
 
-.song-link-row{margin-top:-18px;margin-bottom:16px;line-height:1.5}.song-link-row .song-link{font-size:12px;white-space:nowrap;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.song-link-row{margin-top:-18px;margin-bottom:16px;line-height:1.5;text-align:right}.song-link-row .song-link{font-size:16px;white-space:nowrap;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
