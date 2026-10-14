@@ -3,4 +3,9 @@ layout: default
 title: 文章归档
 permalink: /archive/
 ---
-<section class="page-title"><div class="eyebrow">ARCHIVE</div><h1>文章归档<span class="dot">。</span></h1><p>按时间整理的全部文章。</p></section>{% assign years = site.posts | group_by_exp: 'post', 'post.date | date: "%Y"' %}{% for year in years %}<section><h2>{{ year.name }}</h2>{% for post in year.items %}<article class="archive-row"><time>{{ post.date | date: '%m / %d' }}</time><a href="{{ post.url }}">{{ post.title | escape }}</a></article>{% endfor %}</section>{% endfor %}{% if site.posts.size == 0 %}<div class="empty"><h3>暂时还没有文章</h3><p>发布第一篇文章后，它会出现在这里。</p></div>{% endif %}
+<header class="page-heading"><h1>归档<span class="heading-dot">。</span></h1><p>共 {{ site.posts | size }} 篇文章</p></header>
+{% assign years = site.posts | group_by_exp: 'post', 'post.date | date: "%Y"' %}
+{% for year in years %}
+<section class="archive-year" aria-labelledby="year-{{ year.name }}"><h2 id="year-{{ year.name }}">{{ year.name }}</h2><div class="archive-entries">{% for post in year.items %}<article class="archive-row"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%m.%d' }}</time><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a><span aria-hidden="true">↗</span></article>{% endfor %}</div></section>
+{% endfor %}
+{% if site.posts.size == 0 %}<p class="empty">还没有文章。</p>{% endif %}
