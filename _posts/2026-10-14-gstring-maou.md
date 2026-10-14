@@ -2,7 +2,7 @@
 title: 《g 弦上的魔王》游玩记录
 date: 2026-10-14
 tags: []
-published: false
+published: true
 ---
 基本信息：
 
