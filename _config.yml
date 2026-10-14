@@ -1,0 +1,14 @@
+title: ushg8877
+description: 个人博客
+url: https://ushg8877.github.io
+lang: zh-CN
+timezone: Asia/Shanghai
+permalink: /posts/:title/
+markdown: kramdown
+exclude: [README.md, Gemfile, Gemfile.lock]
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
