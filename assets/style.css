@@ -4,4 +4,4 @@
 
 .hero-heading{font-size:clamp(19px,2vw,24px);line-height:1.8;letter-spacing:0}.song-link{display:inline-block;margin-left:.7em;font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:13px;font-weight:400;letter-spacing:0;color:var(--accent);text-decoration:underline;text-underline-offset:4px;vertical-align:baseline}
 
-.hero-heading .song-link{font-size:12px!important;line-height:1.4;white-space:nowrap}
+.song-link-row{margin-top:-18px;margin-bottom:16px;line-height:1.5}.song-link-row .song-link{font-size:12px;white-space:nowrap;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
