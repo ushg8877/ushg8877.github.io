@@ -18,7 +18,7 @@ layout: default
     {% for post in site.posts %}
     <article class="post-card" data-title="{{ post.title | escape }}" data-tags="{{ post.tags | join: '|' | escape }}">
       <time class="post-date" datetime="{{ post.date | date_to_xmlschema }}"><span>{{ post.date | date: '%m.%d' }}</span><span>{{ post.date | date: '%Y' }}</span></time>
-      <div class="post-info"><div class="post-tags">{% for tag in post.tags %}<span>{{ tag | escape }}</span>{% endfor %}</div><h3><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></h3><p class="post-excerpt">{{ post.description | default: post.excerpt | split: '</p>' | first | strip_html | truncate: 110 }}</p></div>
+      <div class="post-info"><div class="post-tags">{% for tag in post.tags %}<span>{{ tag | escape }}</span>{% endfor %}</div><h3><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></h3>' | first | strip_html | truncate: 110 }}</p></div>
       <span class="post-arrow" aria-hidden="true">↗</span>
     </article>
     {% endfor %}
