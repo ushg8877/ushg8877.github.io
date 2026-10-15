@@ -4,8 +4,5 @@ title: 文章归档
 permalink: /archive/
 ---
 <header class="page-heading"><h1>归档<span class="heading-dot">。</span></h1><p>共 {{ site.posts | size }} 篇文章</p></header>
-{% assign years = site.posts | group_by_exp: 'post', 'post.date | date: "%Y"' %}
-{% for year in years %}
-<section class="archive-year" aria-labelledby="year-{{ year.name }}"><h2 id="year-{{ year.name }}">{{ year.name }}</h2><div class="archive-entries">{% for post in year.items %}<article class="archive-row"><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%m.%d' }}</time><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a><span aria-hidden="true">↗</span></article>{% endfor %}</div></section>
-{% endfor %}
+<div class="post-list">{% include ordered-posts.html %}</div>
 {% if site.posts.size == 0 %}<p class="empty">还没有文章。</p>{% endif %}

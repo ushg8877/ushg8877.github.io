@@ -25,3 +25,7 @@
 .identity-mark .bird-twig{fill:none;stroke:var(--soft);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:760px){.site-rail{gap:12px}.identity{gap:9px}}
 @media(max-width:360px){.identity-mark{width:84px;height:55px}.identity-name{font-size:21px}.site-rail{gap:8px}}
+.article-languages{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:24px}
+.article-languages button{font-size:16px;line-height:1.6;min-height:40px;padding:6px 16px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:transparent}
+.article-languages button:hover{color:var(--accent);border-color:var(--soft)}
+.article-languages button[aria-pressed="true"]{color:var(--accent);background:var(--wash);border-color:var(--wash)}

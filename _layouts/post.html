@@ -3,9 +3,24 @@ layout: default
 ---
 <article class="reading">
   <a class="back" href="{{ '/' | relative_url }}">← 所有文章</a>
-  <header class="post-header"><div class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%Y.%m.%d' }}</time><div class="post-tags">{% for tag in page.tags %}<a href="{{ '/' | relative_url }}?tag={{ tag | uri_escape }}#articles">{{ tag | escape }}</a>{% endfor %}</div></div><h1>{{ page.title | escape }}</h1></header>
-  <div class="prose">{{ content }}</div>
-  <nav class="post-pagination" aria-label="相邻文章">{% if page.previous %}<a href="{{ page.previous.url | relative_url }}"><span>上一篇</span><strong>← {{ page.previous.title | escape }}</strong></a>{% endif %}{% if page.next %}<a class="next-post" href="{{ page.next.url | relative_url }}"><span>下一篇</span><strong>{{ page.next.title | escape }} →</strong></a>{% endif %}</nav>
+  <header class="post-header"><div class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%Y.%m.%d' }}</time>{% if page.updated_at %}<time datetime="{{ page.updated_at | date_to_xmlschema }}">更新于 {{ page.updated_at | date: '%Y.%m.%d' }}</time>{% endif %}<div class="post-tags">{% for tag in page.tags %}<a href="{{ '/' | relative_url }}?tag={{ tag | uri_escape }}#articles">{{ tag | escape }}</a>{% endfor %}</div></div><h1 id="article-title" lang="zh-CN">{{ page.title | escape }}</h1>
+  {% assign ja_body = page.translations.ja.body | default: '' | strip %}
+  {% assign en_body = page.translations.en.body | default: '' | strip %}
+  {% if ja_body != '' or en_body != '' %}
+    <div class="article-languages" role="group" aria-label="文章语言" hidden>
+      <button type="button" data-article-language="zh" aria-pressed="true">中文</button>
+      {% if ja_body != '' %}<button type="button" data-article-language="ja" aria-pressed="false" lang="ja">日本語</button>{% endif %}
+      {% if en_body != '' %}<button type="button" data-article-language="en" aria-pressed="false" lang="en">English</button>{% endif %}
+    </div>
+  {% endif %}
+  </header>
+  <div id="article-body" class="prose" lang="zh-CN">{{ content }}</div>
+  <template data-article-version="zh" data-title="{{ page.title | escape }}">{{ content }}</template>
+  {% if ja_body != '' %}{% assign ja_title = page.translations.ja.title | default: '' | strip %}{% if ja_title == '' %}{% assign ja_title = page.title %}{% endif %}<template data-article-version="ja" data-title="{{ ja_title | escape }}">{{ page.translations.ja.body | markdownify }}</template>{% endif %}
+  {% if en_body != '' %}{% assign en_title = page.translations.en.title | default: '' | strip %}{% if en_title == '' %}{% assign en_title = page.title %}{% endif %}<template data-article-version="en" data-title="{{ en_title | escape }}">{{ page.translations.en.body | markdownify }}</template>{% endif %}
+  <span id="article-language-status" class="sr-only" role="status"></span>
+  <nav class="post-pagination" aria-label="相邻文章">{% include ordered-posts.html mode="pagination" %}</nav>
 </article>
 <script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]}};</script>
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js"></script>
+<script defer src="{{ '/assets/article-languages.js' | relative_url }}?v=20261015-articles-1"></script>

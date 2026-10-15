@@ -1,0 +1,40 @@
+{%- comment -%}
+GitHub Pages supports Liquid, but not a custom multi-key sorting plugin.
+Use padded numeric keys so priority 10 sorts above 2 and missing metadata
+falls back to priority 0 / the publication date. The final key breaks ties.
+{%- endcomment -%}
+{%- capture post_keys -%}
+  {%- for item in site.posts -%}
+    {%- assign priority_key = item.priority | default: 0 | plus: 10000 | prepend: '00000' | slice: -5, 5 -%}
+    {%- assign updated_key = item.updated_at | default: item.date | date: '%s' | plus: 100000000000 | prepend: '000000000000' | slice: -12, 12 -%}
+    {{- priority_key -}}:{{- updated_key -}}:{{- forloop.index0 -}}/
+  {%- endfor -%}
+{%- endcapture -%}
+{%- assign sorted_keys = post_keys | split: '/' | sort | reverse -%}
+{%- assign ordered_posts = '' | split: ',' -%}
+{%- for key in sorted_keys -%}
+  {%- assign post_index = key | split: ':' | last | plus: 0 -%}
+  {%- assign item = site.posts[post_index] -%}
+  {%- assign ordered_posts = ordered_posts | push: item -%}
+{%- endfor -%}
+{%- if include.mode == 'pagination' -%}
+  {%- for item in ordered_posts -%}
+    {%- if item.url == page.url -%}
+      {%- unless forloop.first -%}
+        {%- assign previous_index = forloop.index0 | minus: 1 -%}
+        {%- assign previous_post = ordered_posts[previous_index] -%}
+        <a href="{{ previous_post.url | relative_url }}"><span>上一篇</span><strong>← {{ previous_post.title | escape }}</strong></a>
+      {%- endunless -%}
+      {%- unless forloop.last -%}
+        {%- assign next_index = forloop.index0 | plus: 1 -%}
+        {%- assign next_post = ordered_posts[next_index] -%}
+        <a class="next-post" href="{{ next_post.url | relative_url }}"><span>下一篇</span><strong>{{ next_post.title | escape }} →</strong></a>
+      {%- endunless -%}
+      {%- break -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- else -%}
+  {%- for item in ordered_posts -%}
+    {%- include post-card.html post=item -%}
+  {%- endfor -%}
+{%- endif -%}
