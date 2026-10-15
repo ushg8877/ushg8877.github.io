@@ -1,0 +1,22 @@
+.bird-trigger{display:block;flex:none;padding:0;border:0;background:none;color:inherit;position:relative;touch-action:manipulation;border-radius:50%;min-width:44px;min-height:44px}
+.bird-trigger:hover .identity-mark{transform:rotate(-7deg)}
+.bird-trigger .identity-mark{transition:transform .2s}
+.bird-trigger.is-away .identity-mark>:not(.bird-water){opacity:0}
+.bird-trigger:disabled{cursor:default}
+.bird-flight{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+.bird-flight[hidden]{display:none}
+.flying-bird{position:absolute;left:0;top:0;width:76px;height:76px;padding:5px;background:none;border:0;border-radius:50%;color:var(--ink);pointer-events:auto;touch-action:manipulation;transition:left .28s cubic-bezier(.2,.8,.25,1),top .28s cubic-bezier(.2,.8,.25,1);filter:drop-shadow(0 6px 9px #29334c20)}
+.flying-bird .identity-mark{width:66px;height:61px;animation:bird-hover 1.6s ease-in-out infinite}
+.flying-bird .bird-wing{transform-origin:38px 29px;animation:bird-flap .32s ease-in-out infinite alternate}
+.flying-bird .bird-water{display:none}
+.flying-bird .bird-leg{opacity:.3}
+.flying-bird:hover{background:var(--wash)}
+.flight-wind{position:absolute;width:48px;height:18px;border-top:2px solid var(--soft);border-bottom:1px solid var(--soft);border-radius:50%;opacity:0;animation:bird-wind .9s ease-out forwards;pointer-events:none}
+.flight-cloud{position:absolute;pointer-events:none;width:80px;height:24px;border:1px solid var(--soft);background:var(--paper);border-radius:30px;animation:bird-passing-cloud 1.4s ease-out forwards}
+.flight-cloud::before{content:"";position:absolute;left:17px;top:-17px;width:35px;height:25px;border:1px solid var(--soft);border-bottom:0;border-radius:30px 30px 0 0;background:var(--paper)}
+@keyframes bird-passing-cloud{0%{opacity:0;transform:translateY(-30px)}20%{opacity:.55}100%{opacity:0;transform:translate(-30px,240px)}}
+@keyframes bird-flap{from{transform:rotate(-28deg) scaleY(.7)}to{transform:rotate(24deg) scaleY(1.25)}}
+@keyframes bird-hover{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-5px) rotate(1deg)}}
+@keyframes bird-wind{0%{opacity:.5;transform:translateY(0) scaleX(.5)}100%{opacity:0;transform:translate(-25px,85px) scaleX(1.3)}}
+@media(max-width:760px){.bird-trigger .identity-mark{margin:auto}.flying-bird{width:68px;height:68px}.flying-bird .identity-mark{width:58px;height:54px}}
+@media(prefers-reduced-motion:reduce){.flying-bird,.bird-trigger .identity-mark{transition:none}.flying-bird .identity-mark,.flying-bird .bird-wing,.flight-wind,.flight-cloud{animation:none}.flight-wind,.flight-cloud{display:none}}
