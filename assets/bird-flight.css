@@ -1,10 +1,42 @@
-.bird-trigger{display:block;flex:none;padding:0;border:0;background:none;color:inherit;position:relative;touch-action:manipulation;border-radius:50%;min-width:44px;min-height:44px;cursor:pointer}
-.bird-figure{transform-origin:36px 34px}
-.bird-trigger.is-fluttering .bird-figure{animation:bird-short-flight 1.8s ease-in-out}
-.bird-trigger.is-fluttering .bird-wing{transform-origin:40px 29px;animation:bird-wingbeat .36s ease-in-out .12s 4}
-.bird-trigger.is-fluttering .bird-leg{animation:bird-tuck-feet 1.8s ease-in-out}
-@keyframes bird-short-flight{0%,100%{transform:translate(0,0) rotate(0)}10%{transform:translate(0,1px) rotate(3deg)}28%{transform:translate(15px,-25px) rotate(-12deg)}44%{transform:translate(33px,-31px) rotate(-2deg)}60%{transform:translate(40px,-24px) rotate(10deg)}76%{transform:translate(17px,-22px) rotate(-7deg)}90%{transform:translate(0,-5px) rotate(2deg)}}
-@keyframes bird-wingbeat{0%,100%{transform:rotate(0) scale(1)}40%{transform:rotate(-80deg) scale(1.35,.9)}75%{transform:rotate(18deg) scale(.9,.55)}}
-@keyframes bird-tuck-feet{0%,100%{opacity:1;transform:translateY(0)}25%,75%{opacity:.25;transform:translateY(-2px)}}
-@media(max-width:760px){.bird-trigger .identity-mark{margin:auto}}
-@media(prefers-reduced-motion:reduce){.bird-trigger.is-fluttering .bird-figure,.bird-trigger.is-fluttering .bird-wing,.bird-trigger.is-fluttering .bird-leg{animation:none}}
+.bird-trigger{display:block;flex:none;padding:0;border:0;background:none;color:inherit;position:relative;touch-action:manipulation;border-radius:12px;min-width:44px;min-height:44px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bird-traveler{transform:translate(52px,88px)}
+.bird-facing{transform:scaleX(1);transition:transform .18s ease-out}
+.bird-trigger[data-perch="right"] .bird-traveler{transform:translate(132px,65px)}
+.bird-trigger[data-perch="right"] .bird-facing{transform:scaleX(-1)}
+.bird-trigger[data-flight="right"] .bird-traveler{animation:bird-to-right 1.25s both}
+.bird-trigger[data-flight="left"] .bird-traveler{animation:bird-to-left 1.25s both}
+.bird-trigger[data-flight] .bird-wing{transform-origin:-6px -21px;animation:bird-wingbeat .25s ease-in-out .1s 4}
+.bird-trigger[data-flight] .bird-leg{animation:bird-tuck-feet 1.25s both}
+@keyframes bird-to-right{
+  0%{transform:translate(52px,88px);animation-timing-function:ease-in}
+  12%{transform:translate(53px,90px) rotate(5deg);animation-timing-function:ease-out}
+  38%{transform:translate(78px,41px) rotate(-12deg);animation-timing-function:linear}
+  62%{transform:translate(109px,37px) rotate(4deg);animation-timing-function:ease-in}
+  88%{transform:translate(132px,63px) rotate(6deg);animation-timing-function:ease-out}
+  95%{transform:translate(132px,67px) rotate(-2deg);animation-timing-function:ease-out}
+  100%{transform:translate(132px,65px)}
+}
+@keyframes bird-to-left{
+  0%{transform:translate(132px,65px);animation-timing-function:ease-in}
+  12%{transform:translate(131px,67px) rotate(-5deg);animation-timing-function:ease-out}
+  38%{transform:translate(108px,36px) rotate(10deg);animation-timing-function:linear}
+  62%{transform:translate(77px,46px) rotate(-5deg);animation-timing-function:ease-in}
+  88%{transform:translate(52px,85px) rotate(-6deg);animation-timing-function:ease-out}
+  95%{transform:translate(52px,90px) rotate(2deg);animation-timing-function:ease-out}
+  100%{transform:translate(52px,88px)}
+}
+@keyframes bird-wingbeat{
+  0%,100%{transform:rotate(0) scale(1)}
+  42%{transform:rotate(95deg) scale(1.55,.85)}
+  75%{transform:rotate(-18deg) scale(.85,.65)}
+}
+@keyframes bird-tuck-feet{
+  0%,100%{opacity:1;transform:translateY(0)}
+  25%,75%{opacity:.2;transform:translateY(-3px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .bird-facing{transition:none}
+  .bird-trigger[data-flight] .bird-traveler,
+  .bird-trigger[data-flight] .bird-wing,
+  .bird-trigger[data-flight] .bird-leg{animation:none}
+}
