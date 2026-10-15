@@ -8,15 +8,14 @@
   <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title }}</title>
   <link rel="icon" href="{{ '/assets/favicon.svg' | relative_url }}?v=bird-1" type="image/svg+xml">
   <link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}?v=20261014-bird-2">
-  <link rel="stylesheet" href="{{ '/assets/bird-flight.css' | relative_url }}?v=20261015-bird-2">
-  <link rel="stylesheet" href="{{ '/assets/bird-game.css' | relative_url }}?v=20261015-bird-2">
+  <link rel="stylesheet" href="{{ '/assets/bird-flight.css' | relative_url }}?v=20261015-bird-3">
   <script>try{const t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
   <a class="skip" href="#main">跳到正文</a>
   <div class="site-shell">
     <header class="site-rail">
-      <div class="identity"><button class="bird-trigger" id="bird-trigger" type="button" aria-label="让小鸟起飞"><svg class="identity-mark" viewBox="0 0 72 66" aria-hidden="true"><path class="bird-body" d="M8 34c7 2 13 0 18-5-1-10 5-17 14-17 8 0 13 6 13 13l10 5-11 4c-3 12-14 19-27 14C16 45 11 40 8 34Z"/><path class="bird-wing" d="M17 34c7 1 15-2 22-9 2 13-7 20-22 9Z"/><circle class="bird-eye" cx="44.5" cy="22" r="1.7"/><path class="bird-leg" d="m34 47-2 7m-4 0h8"/><path class="bird-water" d="M16 59c8-2 16-2 23 0m6 0h8"/></svg></button><a class="identity-wordmark" href="{{ '/' | relative_url }}" aria-label="Kamome's Blog 首页"><span class="identity-name">Kamome's Blog</span></a></div>
+      <div class="identity"><button class="bird-trigger" id="bird-trigger" type="button" aria-label="让小鸟起飞"><svg class="identity-mark" viewBox="0 0 72 66" aria-hidden="true"><g class="bird-figure"><path class="bird-body" d="M8 34c7 2 13 0 18-5-1-10 5-17 14-17 8 0 13 6 13 13l10 5-11 4c-3 12-14 19-27 14C16 45 11 40 8 34Z"/><path class="bird-wing" d="M17 34c7 1 15-2 22-9 2 13-7 20-22 9Z"/><circle class="bird-eye" cx="44.5" cy="22" r="1.7"/><path class="bird-leg" d="m34 47-2 7m-4 0h8"/></g><path class="bird-water" d="M16 59c8-2 16-2 23 0m6 0h8"/></svg></button><a class="identity-wordmark" href="{{ '/' | relative_url }}" aria-label="Kamome's Blog 首页"><span class="identity-name">Kamome's Blog</span></a></div>
       <nav class="main-nav" aria-label="主导航">
         <a href="{{ '/' | relative_url }}" {% if page.url == '/' %}aria-current="page"{% endif %}><span>首页</span><span class="nav-mark" aria-hidden="true">↗</span></a>
         <a href="{{ '/archive/' | relative_url }}" {% if page.url == '/archive/' %}aria-current="page"{% endif %}><span>归档</span><span class="nav-mark" aria-hidden="true">↗</span></a>
@@ -30,7 +29,6 @@
     </div>
   </div>
   <script src="{{ '/assets/site.js' | relative_url }}?v=20261014-editorial-1" defer></script>
-  <script src="{{ '/assets/bird-game.js' | relative_url }}?v=20261015-bird-2" defer></script>
-  <script src="{{ '/assets/bird-flight.js' | relative_url }}?v=20261015-bird-2" defer></script>
+  <script src="{{ '/assets/bird-flight.js' | relative_url }}?v=20261015-bird-3" defer></script>
 </body>
 </html>
