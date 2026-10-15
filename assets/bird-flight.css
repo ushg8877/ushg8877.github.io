@@ -1,8 +1,10 @@
 .bird-trigger{display:block;flex:none;padding:0;border:0;background:none;color:inherit;position:relative;touch-action:manipulation;border-radius:50%;min-width:44px;min-height:44px;cursor:pointer}
 .bird-figure{transform-origin:36px 34px}
-.bird-trigger.is-fluttering .bird-figure{animation:bird-short-flight 1s ease-in-out}
-.bird-trigger.is-fluttering .bird-wing{transform-origin:38px 29px;animation:bird-wingbeat .5s ease-in-out 2}
-@keyframes bird-short-flight{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(4px,-12px) rotate(-6deg)}50%{transform:translate(7px,-8px) rotate(1deg)}70%{transform:translate(5px,-17px) rotate(-4deg)}}
-@keyframes bird-wingbeat{0%,100%{transform:rotate(0) scaleY(1)}45%{transform:rotate(-32deg) scaleY(.55)}75%{transform:rotate(12deg) scaleY(1.1)}}
+.bird-trigger.is-fluttering .bird-figure{animation:bird-short-flight 1.8s ease-in-out}
+.bird-trigger.is-fluttering .bird-wing{transform-origin:40px 29px;animation:bird-wingbeat .36s ease-in-out .12s 4}
+.bird-trigger.is-fluttering .bird-leg{animation:bird-tuck-feet 1.8s ease-in-out}
+@keyframes bird-short-flight{0%,100%{transform:translate(0,0) rotate(0)}10%{transform:translate(0,1px) rotate(3deg)}28%{transform:translate(15px,-25px) rotate(-12deg)}44%{transform:translate(33px,-31px) rotate(-2deg)}60%{transform:translate(40px,-24px) rotate(10deg)}76%{transform:translate(17px,-22px) rotate(-7deg)}90%{transform:translate(0,-5px) rotate(2deg)}}
+@keyframes bird-wingbeat{0%,100%{transform:rotate(0) scale(1)}40%{transform:rotate(-80deg) scale(1.35,.9)}75%{transform:rotate(18deg) scale(.9,.55)}}
+@keyframes bird-tuck-feet{0%,100%{opacity:1;transform:translateY(0)}25%,75%{opacity:.25;transform:translateY(-2px)}}
 @media(max-width:760px){.bird-trigger .identity-mark{margin:auto}}
-@media(prefers-reduced-motion:reduce){.bird-trigger.is-fluttering .bird-figure,.bird-trigger.is-fluttering .bird-wing{animation:none}}
+@media(prefers-reduced-motion:reduce){.bird-trigger.is-fluttering .bird-figure,.bird-trigger.is-fluttering .bird-wing,.bird-trigger.is-fluttering .bird-leg{animation:none}}

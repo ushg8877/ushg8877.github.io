@@ -11,7 +11,7 @@
   bird.addEventListener('click', () => {
     if (motion.matches || bird.classList.contains('is-fluttering')) return;
     bird.classList.add('is-fluttering');
-    returnTimer = window.setTimeout(land, 1200);
+    returnTimer = window.setTimeout(land, 2100);
   });
   bird.addEventListener('animationend', event => {
     if (event.animationName === 'bird-short-flight') land();

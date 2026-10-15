@@ -13,4 +13,4 @@
 @media(max-width:380px){.site-shell{padding:0 18px}.search{width:135px}.post-card{gap:12px;grid-template-columns:43px minmax(0,1fr) 14px}.hero-heading{font-size:19px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
 
-.identity-mark .bird-body{fill:var(--ink);stroke:none}.identity-mark .bird-wing{fill:var(--soft);stroke:none}.identity-mark .bird-eye{fill:var(--paper);stroke:none}.identity-mark .bird-leg{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.identity-mark .bird-water{fill:none;stroke:var(--soft);stroke-width:1.5;stroke-linecap:round}
+.identity-mark .bird-body{fill:var(--ink);stroke:none}.identity-mark .bird-wing,.identity-mark .bird-leaf{fill:var(--soft);stroke:none}.identity-mark .bird-eye{fill:var(--paper);stroke:none}.identity-mark .bird-leg{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.identity-mark .bird-branch{fill:none;stroke:var(--soft);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
