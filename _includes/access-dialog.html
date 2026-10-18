@@ -1,4 +1,5 @@
-<dialog id="access-dialog" class="access-dialog" aria-label="验证访问码" data-manifest="{{ '/assets/access/keys.json' | relative_url }}">
+{% assign access_manifest = '/assets/access/articles/' | append: page.access_id | append: '.json' %}
+<dialog id="access-dialog" class="access-dialog" aria-label="验证访问码" data-article="{{ page.access_id | escape }}" data-manifest="{{ access_manifest | relative_url }}">
   <form id="access-form" novalidate>
     <input id="access-code" name="access-code" type="password" aria-label="访问码" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" maxlength="80" required aria-describedby="access-status">
   </form>

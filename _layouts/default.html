@@ -47,7 +47,7 @@
         <a href="{{ '/archive/' | relative_url }}" {% if page.url == '/archive/' %}aria-current="page"{% endif %}><span>归档</span><span class="nav-mark" aria-hidden="true">↗</span></a>
         <a href="https://github.com/ushg8877" target="_blank" rel="noopener noreferrer"><span>GitHub</span><span class="nav-mark" aria-hidden="true">↗</span></a>
       </nav>
-      <button id="access-open" class="access-trigger" type="button" aria-haspopup="dialog" aria-controls="access-dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><span>验证访问码</span></button>
+      {% if page.access_id %}<button id="access-open" class="access-trigger" type="button" aria-haspopup="dialog" aria-controls="access-dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><span>验证访问码</span></button>{% endif %}
       <button id="theme" class="theme-toggle" type="button" aria-label="切换到深色模式" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg><span>深色模式</span></button>
     </header>
     <div class="site-content">
@@ -55,11 +55,11 @@
       <footer class="site-footer"><span>© {{ 'now' | date: '%Y' }} Kamome's Blog</span><span class="site-visit-count" id="vercount_container_site_pv">总浏览 <span id="vercount_value_site_pv">—</span> 次</span><a href="#main" aria-label="回到顶部">↑</a></footer>
     </div>
   </div>
-  {% include access-dialog.html %}
+  {% if page.access_id %}{% include access-dialog.html %}{% endif %}
   <script src="{{ '/assets/site.js' | relative_url }}?v=20261015-lyrics-1" defer></script>
   <script src="{{ '/assets/bird-flight.js' | relative_url }}?v=20261015-branches-1" defer></script>
   <script src="{{ '/assets/article-engagement.js' | relative_url }}?v=20261018-1" defer></script>
   <script src="{{ '/assets/page-views.js' | relative_url }}?v=20261018-1" defer></script>
-  <script src="{{ '/assets/sealed-content.js' | relative_url }}?v=20261018-3" defer></script>
+  <script src="{{ '/assets/sealed-content.js' | relative_url }}?v=20261018-article-1" defer></script>
 </body>
 </html>

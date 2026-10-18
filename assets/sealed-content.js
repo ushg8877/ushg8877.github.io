@@ -5,7 +5,6 @@
   const decoder = new TextDecoder('utf-8', {fatal: true});
   const epochPattern = /^[a-f0-9]{32}$/;
   const idPattern = /^[a-f0-9]{64}$/;
-  const storageKey = 'kamome.access.session.v1';
   const hasFields = (value, fields) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === fields.length && fields.every(field => Object.hasOwn(value, field));
 
   function unbase64(value, expectedLength) {
@@ -77,6 +76,10 @@
   const status = document.querySelector('#access-status');
   const article = document.querySelector('#article-body');
   if (!dialog || !opener || !form || !input || !status) return;
+  const articleId = dialog.dataset.article;
+  if (!epochPattern.test(articleId || '')) return;
+  const storageKey = 'kamome.access.article.v1.' + articleId;
+  try { sessionStorage.removeItem('kamome.access.session.v1'); } catch {}
 
   let manifest = null;
   let manifestPromise = null;
@@ -108,7 +111,9 @@
         if (!response.ok) throw Error('Manifest unavailable');
         const body = await response.text();
         if (body.length > 300000) throw Error('Manifest too large');
-        return validateManifest(JSON.parse(body));
+        const manifest = validateManifest(JSON.parse(body));
+        if (manifest.codes.length !== 1) throw Error('Expected one article access code');
+        return manifest;
       } finally { clearTimeout(timeout); }
     })();
     manifestPromise = task;
