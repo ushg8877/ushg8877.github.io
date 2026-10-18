@@ -1,15 +1,6 @@
-<dialog id="access-dialog" class="access-dialog" aria-labelledby="access-heading" aria-describedby="access-description" data-manifest="{{ '/assets/access/keys.json' | relative_url }}">
-  <div class="access-dialog-heading">
-    <h2 id="access-heading">验证访问码</h2>
-    <button class="access-close" type="button" aria-label="关闭验证窗口">×</button>
-  </div>
-  <p id="access-description">验证后，本次浏览中所有加密黑幕都可以展开。将鼠标移到黑幕上，或点击黑幕，即可阅读。</p>
-  <form id="access-form">
-    <label for="access-code">访问码</label>
-    <input id="access-code" name="access-code" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" maxlength="80" required aria-describedby="access-status">
-    <button class="access-submit" type="submit">验证</button>
+<dialog id="access-dialog" class="access-dialog" aria-label="验证访问码" data-manifest="{{ '/assets/access/keys.json' | relative_url }}">
+  <form id="access-form" novalidate>
+    <input id="access-code" name="access-code" type="password" aria-label="访问码" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" maxlength="80" required aria-describedby="access-status">
   </form>
-  <p id="access-status" class="access-status" role="status" aria-live="polite"></p>
-  <button id="access-lock" class="access-lock" type="button" hidden>退出验证并收起黑幕</button>
-  <noscript>请启用 JavaScript 后验证访问码。加密内容不会直接出现在网页源码中。</noscript>
+  <span id="access-status" class="access-visually-hidden" role="status" aria-live="polite"></span>
 </dialog>

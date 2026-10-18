@@ -75,23 +75,23 @@
   const form = document.querySelector('#access-form');
   const input = document.querySelector('#access-code');
   const status = document.querySelector('#access-status');
-  const lockButton = document.querySelector('#access-lock');
-  const submit = form?.querySelector('button[type="submit"]');
   const article = document.querySelector('#article-body');
-  if (!dialog || !opener || !form || !input || !status || !lockButton || !submit) return;
+  if (!dialog || !opener || !form || !input || !status) return;
 
   let manifest = null;
   let manifestPromise = null;
   let master = null;
   let generation = 0;
   let busy = false;
-  let lastPointerWasTouch = false;
+  let lastPointerType = 'keyboard';
+  let autoSubmitTimer = null;
   let states = new WeakMap();
   let mathQueue = Promise.resolve();
   const blocks = () => [...(article?.querySelectorAll('.sealed-block[data-sealed]') || [])];
   const setStatus = (text, error = false) => {
     status.textContent = text;
     status.dataset.error = String(error);
+    input.setAttribute('aria-invalid', String(error));
   };
   const forgetSession = () => { try { sessionStorage.removeItem(storageKey); } catch {} };
   const sessionData = () => { try { return JSON.parse(sessionStorage.getItem(storageKey) || 'null'); } catch { return null; } };
@@ -125,24 +125,21 @@
 
   function updateAccessUi() {
     opener.dataset.verified = String(Boolean(master));
-    opener.querySelector('span').textContent = master ? '访问码已验证' : '验证访问码';
-    lockButton.hidden = !master;
-    form.hidden = Boolean(master);
+    opener.querySelector('span').textContent = master ? '通过' : '验证访问码';
     for (const node of blocks()) {
       const state = states.get(node);
-      if (state && !state.revealed) state.button.textContent = master ? '黑幕 · 移入或点击阅读' : '黑幕 · 点击验证访问码';
+      if (state) state.button.setAttribute('aria-label', master ? '黑幕内容' : '验证访问码');
     }
   }
 
   function openDialog() {
     if (busy) return;
     updateAccessUi();
-    if (master) setStatus('已通过验证。关闭这个窗口即可阅读黑幕；关闭本页签后需要重新验证。');
-    else if (!crypto?.subtle) setStatus('当前浏览器无法使用加密验证，请通过 HTTPS 打开博客并更新浏览器。', true);
-    else setStatus('访问码适用于本站所有加密黑幕。');
+    if (master) return;
+    if (!crypto?.subtle) setStatus('当前浏览器无法使用加密验证。', true);
+    else setStatus('');
     if (!dialog.open) dialog.showModal();
-    if (!master) input.focus();
-    else lockButton.focus();
+    input.focus();
   }
 
   function clearReading(node, state) {
@@ -152,7 +149,6 @@
     state.revealed = false;
     node.dataset.revealed = 'false';
     state.button.setAttribute('aria-expanded', 'false');
-    state.button.textContent = master ? '黑幕 · 移入或点击阅读' : '黑幕 · 点击验证访问码';
   }
 
   function lock(announce = true) {
@@ -234,7 +230,7 @@
     const key = master;
     const epoch = manifest?.epoch;
     state.pending = true;
-    state.button.textContent = '正在解密…';
+    node.setAttribute('aria-busy', 'true');
     try {
       const html = await decryptBlock(node.dataset.sealed, epoch, key);
       if (token !== generation || !node.isConnected || !wantsReading(state)) return;
@@ -242,18 +238,23 @@
       // The site's general MathJax configuration permits extension macros. Keep
       // resource/HTML commands out of this isolated reader before any typesetting.
       if (/\\(?:href|url|require|includegraphics|class|style|cssId|htmlClass|htmlId|htmlStyle|htmlData|def|gdef|edef|xdef|let|newcommand|renewcommand|providecommand|csname|expandafter|input|include|catcode)\b/i.test(fragment.textContent)) throw Error('Unsupported active TeX command');
+      if (node.classList.contains('sealed-inline')) {
+        // Inline Markdown is emitted as a single paragraph by the authoring app.
+        // Move its sanitized children so a span never contains a block paragraph.
+        const children = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
+        if (children.length === 1 && children[0].nodeName === 'P') fragment.replaceChildren(...children[0].childNodes);
+      }
       state.reading.replaceChildren(fragment);
       state.reading.hidden = false;
       state.revealed = true;
       node.dataset.revealed = 'true';
-      state.button.textContent = '黑幕已展开 · 点击收起';
       state.button.setAttribute('aria-expanded', 'true');
       typesetReading(node, state, token);
     } catch {
-      if (token === generation && node.isConnected) state.button.textContent = '此段暂时无法解密，请刷新页面后重新验证';
+      if (token === generation && node.isConnected) state.button.setAttribute('aria-label', '此段暂时无法解密，请刷新页面后重新验证');
     } finally {
       state.pending = false;
-      if (!state.revealed && !wantsReading(state)) state.button.textContent = master ? '黑幕 · 移入或点击阅读' : '黑幕 · 点击验证访问码';
+      node.removeAttribute('aria-busy');
     }
   }
 
@@ -264,8 +265,8 @@
       button.type = 'button';
       button.className = 'sealed-toggle';
       button.setAttribute('aria-expanded', 'false');
-      button.textContent = master ? '黑幕 · 移入或点击阅读' : '黑幕 · 点击验证访问码';
-      const reading = document.createElement('div');
+      button.setAttribute('aria-label', master ? '黑幕内容' : '验证访问码');
+      const reading = document.createElement(node.classList.contains('sealed-inline') ? 'span' : 'div');
       reading.className = 'sealed-reading';
       reading.hidden = true;
       const state = {button, reading, hover: false, focus: false, pinned: false, revealed: false, pending: false};
@@ -273,14 +274,14 @@
       node.replaceChildren(button, reading);
       node.dataset.revealed = 'false';
       node.addEventListener('pointerenter', event => {
-        if (event.pointerType === 'touch') return;
+        if (event.pointerType === 'touch' || event.pointerType === 'pen') return;
         state.hover = true;
         renderState(node, state);
       });
       node.addEventListener('pointerleave', () => { state.hover = false; renderState(node, state); });
-      node.addEventListener('pointerdown', event => { lastPointerWasTouch = event.pointerType === 'touch' || event.pointerType === 'pen'; });
+      node.addEventListener('pointerdown', event => { lastPointerType = event.pointerType; });
       node.addEventListener('focusin', () => {
-        if (lastPointerWasTouch) return;
+        if (lastPointerType !== 'keyboard') return;
         state.focus = true;
         renderState(node, state);
       });
@@ -289,30 +290,36 @@
         state.focus = false;
         renderState(node, state);
       });
-      button.addEventListener('click', () => {
+      node.addEventListener('click', event => {
+        if (event.target.closest('a')) return;
         if (!master) { openDialog(); return; }
-        if (state.revealed) {
-          state.hover = state.focus = state.pinned = false;
-          clearReading(node, state);
-        } else {
-          state.pinned = true;
-          renderState(node, state);
-        }
+        // A pointer click must not fight the focus event or desktop hover.
+        if (lastPointerType === 'mouse') return;
+        state.focus = false;
+        state.pinned = !state.pinned;
+        renderState(node, state);
       });
     }
   }
 
   opener.addEventListener('click', openDialog);
-  dialog.querySelector('.access-close').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => { input.value = ''; });
-  lockButton.addEventListener('click', () => { lock(); input.focus(); });
-  document.addEventListener('keydown', () => { lastPointerWasTouch = false; }, {capture: true});
+  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+  dialog.addEventListener('close', () => { clearTimeout(autoSubmitTimer); input.value = ''; });
+  document.addEventListener('keydown', () => { lastPointerType = 'keyboard'; }, {capture: true});
+  input.addEventListener('input', () => {
+    clearTimeout(autoSubmitTimer);
+    setStatus('');
+    if (/^[0-9a-f]{32}$/i.test(input.value.replace(/[\s-]/gu, ''))) {
+      autoSubmitTimer = setTimeout(() => { if (!busy && dialog.open) form.requestSubmit(); }, 180);
+    }
+  });
   form.addEventListener('submit', async event => {
     event.preventDefault();
+    clearTimeout(autoSubmitTimer);
     if (busy) return;
     if (!crypto?.subtle) { setStatus('当前浏览器不支持加密验证，请使用较新的浏览器。', true); return; }
     busy = true;
-    submit.disabled = true;
+    input.setAttribute('aria-busy', 'true');
     input.disabled = true;
     const code = input.value;
     input.value = '';
@@ -327,14 +334,16 @@
       try { sessionStorage.setItem(storageKey, JSON.stringify({version: 1, epoch: currentManifest.epoch, key: base64(raw)})); } catch {}
       raw.fill(0);
       updateAccessUi();
-      setStatus('验证成功。关闭窗口后，将鼠标移到黑幕上或点击黑幕即可阅读。');
-      lockButton.focus();
+      setStatus('通过');
+      dialog.close();
+      opener.focus();
     } catch {
       setStatus(manifest ? '访问码不正确、已失效，或验证资料暂时无法加载。请确认后重试。' : '验证资料暂时无法加载，请稍后重试。', true);
     } finally {
       busy = false;
-      submit.disabled = false;
       input.disabled = false;
+      input.removeAttribute('aria-busy');
+      if (dialog.open) input.focus();
     }
   });
 
