@@ -16,6 +16,12 @@
 .sealed-placeholder{visibility:hidden}
 .sealed-block .sealed-toggle{position:absolute;inset:0;display:block;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:transparent;cursor:pointer;font:inherit}
 .sealed-block .sealed-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.sealed-block .sealed-toggle:disabled{cursor:default;opacity:1}
+.sealed-group{display:flow-root;margin:1em 0}
+.sealed-group>.sealed-part{width:min(var(--sealed-width,22em),100%)}
+.sealed-group>.sealed-part:first-child{margin-top:0}
+.sealed-group>.sealed-part:last-child{margin-bottom:0}
+.sealed-group>.sealed-part[data-revealed="true"]{width:fit-content;max-width:100%}
 .sealed-block[data-revealed="true"]{width:auto;min-height:0;background:transparent;color:inherit;box-shadow:none}
 .sealed-block[data-revealed="true"] .sealed-toggle{z-index:0;pointer-events:none}
 .sealed-block .sealed-reading{position:relative;padding:0;color:var(--ink)}

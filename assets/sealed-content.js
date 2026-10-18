@@ -128,7 +128,10 @@
     opener.querySelector('span').textContent = master ? '通过' : '验证访问码';
     for (const node of blocks()) {
       const state = states.get(node);
-      if (state) state.button.setAttribute('aria-label', master ? '黑幕内容' : '验证访问码');
+      if (state) {
+        state.button.setAttribute('aria-label', '黑幕内容');
+        state.button.disabled = !master;
+      }
     }
   }
 
@@ -238,6 +241,12 @@
       // The site's general MathJax configuration permits extension macros. Keep
       // resource/HTML commands out of this isolated reader before any typesetting.
       if (/\\(?:href|url|require|includegraphics|class|style|cssId|htmlClass|htmlId|htmlStyle|htmlData|def|gdef|edef|xdef|let|newcommand|renewcommand|providecommand|csname|expandafter|input|include|catcode)\b/i.test(fragment.textContent)) throw Error('Unsupported active TeX command');
+      if (node.hasAttribute('data-part')) {
+        const parts = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
+        const part = parts[Number(node.dataset.part)];
+        if (!part) throw Error('Missing paragraph');
+        fragment.replaceChildren(part);
+      }
       if (node.classList.contains('sealed-inline')) {
         // Inline Markdown is emitted as a single paragraph by the authoring app.
         // Move its sanitized children so a span never contains a block paragraph.
@@ -259,13 +268,31 @@
   }
 
   function prepareBlocks() {
-    for (const node of blocks()) {
+    const pending = blocks();
+    for (const node of pending) {
       if (states.has(node)) continue;
+      const layout = node.querySelector(':scope > .sealed-placeholder')?.dataset.parts;
+      if (!node.classList.contains('sealed-inline') && layout && /^(?:[1-9]|[1-3][0-9]|4[0-4])(?:,(?:[1-9]|[1-3][0-9]|4[0-4]))*$/.test(layout)) {
+        const group = document.createElement('div');
+        group.className = 'sealed-group';
+        layout.split(',').forEach((width, index) => {
+          const part = document.createElement('div');
+          part.className = 'sealed-block sealed-part';
+          part.dataset.sealed = node.dataset.sealed;
+          part.dataset.part = String(index);
+          part.style.setProperty('--sealed-width', width + 'em');
+          group.append(part);
+          pending.push(part);
+        });
+        node.replaceWith(group);
+        continue;
+      }
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'sealed-toggle';
       button.setAttribute('aria-expanded', 'false');
-      button.setAttribute('aria-label', master ? '黑幕内容' : '验证访问码');
+      button.setAttribute('aria-label', '黑幕内容');
+      button.disabled = !master;
       const reading = document.createElement(node.classList.contains('sealed-inline') ? 'span' : 'div');
       reading.className = 'sealed-reading';
       reading.hidden = true;
@@ -292,7 +319,7 @@
       });
       node.addEventListener('click', event => {
         if (event.target.closest('a')) return;
-        if (!master) { openDialog(); return; }
+        if (!master) return;
         // A pointer click must not fight the focus event or desktop hover.
         if (lastPointerType === 'mouse') return;
         state.focus = false;
@@ -357,6 +384,7 @@
       const state = states.get(node);
       if (state) { state.hover = state.focus = state.pinned = false; clearReading(node, state); }
     }
+    updateAccessUi();
   });
 
   async function restoreSession() {
