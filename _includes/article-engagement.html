@@ -1,0 +1,21 @@
+{% if site.giscus.enabled == true %}
+<section id="article-comments" class="article-engagement" aria-labelledby="article-comments-heading"
+  data-giscus-enabled="true"
+  data-repo="{{ site.giscus.repo | escape }}"
+  data-repo-id="{{ site.giscus.repo_id | escape }}"
+  data-category="{{ site.giscus.category | escape }}"
+  data-category-id="{{ site.giscus.category_id | escape }}"
+  data-theme-light="{{ '/assets/giscus-theme-light.css' | absolute_url }}"
+  data-theme-dark="{{ '/assets/giscus-theme-dark.css' | absolute_url }}"
+  data-term="{{ page.url | relative_url | escape }}">
+  <h2 id="article-comments-heading">评论</h2>
+  <p class="engagement-intro">登录 GitHub 后，可以点赞或留言。</p>
+  <p class="engagement-status" role="status" aria-live="polite" hidden></p>
+  <div class="giscus" aria-label="文章点赞与评论"></div>
+  <div class="engagement-actions">
+    <button class="engagement-retry" type="button" hidden>重新加载</button>
+    <a class="engagement-github" href="https://github.com/{{ site.giscus.repo | escape }}/discussions" target="_blank" rel="noopener noreferrer">在 GitHub 打开讨论区 ↗</a>
+  </div>
+  <noscript><p>启用 JavaScript 后可以在这里评论，也可以<a href="https://github.com/{{ site.giscus.repo | escape }}/discussions" target="_blank" rel="noopener noreferrer">前往 GitHub 讨论区</a>。</p></noscript>
+</section>
+{% endif %}

@@ -13,6 +13,10 @@ layout: default
       {% if en_body != '' %}<button type="button" data-article-language="en" aria-pressed="false" lang="en">English</button>{% endif %}
     </div>
   {% endif %}
+  <div class="post-engagement-meta">
+    <span id="vercount_container_page_pv">浏览 <span id="vercount_value_page_pv">—</span> 次</span>
+    {% if site.giscus.enabled == true %}<a href="#article-comments">点赞与评论 ↓</a>{% endif %}
+  </div>
   </header>
   <div id="article-body" class="prose" lang="zh-CN">{{ content }}</div>
   <template data-article-version="zh" data-title="{{ page.title | escape }}">{{ content }}</template>
@@ -20,6 +24,7 @@ layout: default
   {% if en_body != '' %}{% assign en_title = page.translations.en.title | default: '' | strip %}{% if en_title == '' %}{% assign en_title = page.title %}{% endif %}<template data-article-version="en" data-title="{{ en_title | escape }}">{{ page.translations.en.body | markdownify }}</template>{% endif %}
   <span id="article-language-status" class="sr-only" role="status"></span>
   <nav class="post-pagination" aria-label="相邻文章">{% include ordered-posts.html mode="pagination" %}</nav>
+  {% include article-engagement.html %}
 </article>
 <script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]}};</script>
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js"></script>

@@ -29,3 +29,6 @@
 .article-languages button{font-size:16px;line-height:1.6;min-height:40px;padding:6px 16px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:transparent}
 .article-languages button:hover{color:var(--accent);border-color:var(--soft)}
 .article-languages button[aria-pressed="true"]{color:var(--accent);background:var(--wash);border-color:var(--wash)}
+.site-footer{flex-wrap:wrap;gap:12px 20px}
+.site-visit-count{font-size:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.site-footer>a{margin-left:auto}

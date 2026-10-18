@@ -1,0 +1,28 @@
+@import url("https://giscus.app/themes/light.css");
+
+/* Loaded inside giscus, where the blog's main stylesheet cannot reach. */
+:root{font-size:16px}
+body{font-family:"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}
+main{
+  --color-fg-default:#29334c;
+  --color-fg-muted:#707788;
+  --color-fg-subtle:#707788;
+  --color-canvas-default:transparent;
+  --color-canvas-overlay:#fcfbf8;
+  --color-canvas-inset:#f0edf6;
+  --color-canvas-subtle:#f0edf6;
+  --color-border-default:#e2e3e8;
+  --color-border-muted:#e2e3e8;
+  --color-accent-fg:#696297;
+  --color-accent-emphasis:#696297;
+  --color-btn-primary-bg:#696297;
+  --color-btn-primary-hover-bg:#575181;
+  --color-btn-primary-selected-bg:#575181;
+  --color-btn-primary-disabled-bg:#a6a2bd;
+  --color-btn-bg:#f0edf6;
+  --color-btn-text:#29334c;
+  --color-social-reaction-bg-hover:#f0edf6;
+  --color-social-reaction-bg-reacted-hover:#e7e1f0;
+}
+main .text-sm,main .text-xs,main .markdown h5,main .markdown h6,main .markdown pre,main .markdown code,main .markdown tt,main .markdown kbd,main .markdown .footnotes{font-size:16px!important;line-height:1.6}
+main input,main textarea,main button{font-size:16px}

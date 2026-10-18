@@ -8,6 +8,12 @@ markdown: kramdown
 kramdown:
   math_engine: null
 exclude: [README.md, Gemfile, Gemfile.lock]
+giscus:
+  enabled: true
+  repo: ushg8877/ushg8877.github.io
+  repo_id: R_kgDOVIqUwg
+  category: Announcements
+  category_id: DIC_kwDOVIqUws4DI05N
 defaults:
   - scope:
       path: ""

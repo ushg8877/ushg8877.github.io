@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{{ page.description | default: site.description | escape }}">
   <meta name="color-scheme" content="light dark">
+  <link rel="canonical" href="{{ page.url | absolute_url }}">
+  <meta name="giscus:backlink" content="{{ page.url | absolute_url }}">
   <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title }}</title>
   <link rel="icon" href="{{ '/assets/favicon.svg' | relative_url }}?v=20261015-branches-1" type="image/svg+xml">
-  <link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}?v=20261015-articles-1">
+  <link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}?v=20261018-engagement-1">
+  <link rel="stylesheet" href="{{ '/assets/article-engagement.css' | relative_url }}?v=20261018-1">
   <link rel="stylesheet" href="{{ '/assets/bird-flight.css' | relative_url }}?v=20261015-branches-1">
   <script>try{const t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
@@ -47,10 +50,12 @@
     </header>
     <div class="site-content">
       <main id="main" tabindex="-1">{{ content }}</main>
-      <footer class="site-footer"><span>© {{ 'now' | date: '%Y' }} Kamome's Blog</span><a href="#main" aria-label="回到顶部">↑</a></footer>
+      <footer class="site-footer"><span>© {{ 'now' | date: '%Y' }} Kamome's Blog</span><span class="site-visit-count" id="vercount_container_site_pv">总浏览 <span id="vercount_value_site_pv">—</span> 次</span><a href="#main" aria-label="回到顶部">↑</a></footer>
     </div>
   </div>
   <script src="{{ '/assets/site.js' | relative_url }}?v=20261015-lyrics-1" defer></script>
   <script src="{{ '/assets/bird-flight.js' | relative_url }}?v=20261015-branches-1" defer></script>
+  <script src="{{ '/assets/article-engagement.js' | relative_url }}?v=20261018-1" defer></script>
+  <script src="{{ '/assets/page-views.js' | relative_url }}?v=20261018-1" defer></script>
 </body>
 </html>
