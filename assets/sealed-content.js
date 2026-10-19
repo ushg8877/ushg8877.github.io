@@ -90,6 +90,8 @@
   let autoSubmitTimer = null;
   let states = new WeakMap();
   let mathQueue = Promise.resolve();
+  let publicCountsPromise = null;
+  const countRequests = new WeakSet();
   const blocks = () => [...(article?.querySelectorAll('.sealed-block[data-sealed]') || [])];
   const setStatus = (text, error = false) => {
     status.textContent = text;
@@ -297,9 +299,51 @@
 
   function updateSummaries() {
     for (const run of article?.querySelectorAll('.sealed-run') || []) {
-      run.querySelector(':scope > .sealed-summary').hidden = Boolean(master);
-      run.querySelector(':scope > .sealed-run-content').hidden = !master;
+      const summary = run.querySelector(':scope > .sealed-summary');
+      const content = run.querySelector(':scope > .sealed-run-content');
+      const total = wholeSecret(content);
+      const label = `【此处省略 ${total?.known ? total.count : '…'} 字】`;
+      if (summary.textContent !== label) summary.textContent = label;
+      summary.hidden = Boolean(master);
+      content.hidden = !master;
     }
+  }
+
+  async function fillMissingCounts() {
+    const pending = [...(article?.querySelectorAll('.sealed-group,.sealed-block:not(.sealed-part)') || [])]
+      .filter(node => node.dataset.chars === undefined && !countRequests.has(node));
+    if (!pending.length) return;
+    pending.forEach(node => countRequests.add(node));
+    // Older open editor windows may republish a ciphertext without its new
+    // count attribute. This public, hash-bound index contains numbers only.
+    publicCountsPromise ||= (async () => {
+      const abort = new AbortController();
+      const timeout = setTimeout(() => abort.abort(), 8000);
+      try {
+        const url = new URL('../character-counts.json', new URL(dialog.dataset.manifest, location.href));
+        if (url.origin !== location.origin) return {};
+        const response = await fetch(url, {cache: 'no-cache', credentials: 'omit', signal: abort.signal});
+        if (!response.ok) return {};
+        const text = await response.text();
+        if (text.length > 500000) return {};
+        const data = JSON.parse(text);
+        if (data.version !== 1 || !data.counts || typeof data.counts !== 'object' || Array.isArray(data.counts)) return {};
+        return data.counts;
+      } catch { return {}; }
+      finally { clearTimeout(timeout); }
+    })();
+    const counts = await publicCountsPromise;
+    await Promise.all(pending.map(async node => {
+      try {
+        const cipher = node.dataset.sealed || node.querySelector(':scope > .sealed-part')?.dataset.sealed;
+        if (!cipher) return;
+        const hash = await crypto.subtle.digest('SHA-256', utf8.encode(cipher));
+        const key = [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+        const count = counts[key];
+        if (node.isConnected && Number.isInteger(count) && count >= 0 && count <= 4_000_000) node.dataset.chars = String(count);
+      } catch {}
+    }));
+    updateSummaries();
   }
 
   function wholeSecret(node) {
@@ -423,6 +467,7 @@
       if (master) prepareReading(node, state);
     }
     prepareSummaries();
+    fillMissingCounts();
   }
 
   opener.addEventListener('click', openDialog);
