@@ -154,7 +154,11 @@
     try { window.MathJax?.typesetClear?.([state.reading]); } catch {}
     state.reading.replaceChildren();
     state.reading.hidden = true;
+    state.reading.inert = true;
+    state.reading.setAttribute('aria-hidden', 'true');
+    state.ready = false;
     state.revealed = false;
+    delete node.dataset.ready;
     node.dataset.revealed = 'false';
     state.button.setAttribute('aria-expanded', 'false');
   }
@@ -218,22 +222,20 @@
 
   function wantsReading(state) { return Boolean(master && (state.hover || state.focus || state.pinned)); }
 
-  function typesetReading(node, state, token) {
-    mathQueue = mathQueue.catch(() => {}).then(async () => {
-      const math = window.MathJax;
-      if (math?.startup?.promise) await math.startup.promise;
-      if (token !== generation || !node.isConnected || !state.revealed || !master) return;
-      if (math?.typesetPromise) await math.typesetPromise([state.reading]);
-      if (token !== generation || !master || !wantsReading(state)) clearReading(node, state);
-    }).catch(() => {});
+  function renderState(node, state) {
+    // Authorized content keeps the same inline/block flow under its mask.
+    // Toggling only visibility avoids rewrapping surrounding text on every hover.
+    const revealed = state.ready && wantsReading(state);
+    state.revealed = revealed;
+    node.dataset.revealed = String(revealed);
+    state.reading.inert = !revealed;
+    state.reading.setAttribute('aria-hidden', String(!revealed));
+    state.button.setAttribute('aria-expanded', String(revealed));
+    if (master && !state.ready) prepareReading(node, state);
   }
 
-  async function renderState(node, state) {
-    if (!wantsReading(state)) {
-      if (state.revealed) clearReading(node, state);
-      return;
-    }
-    if (state.revealed || state.pending) return;
+  async function prepareReading(node, state) {
+    if (!master || state.ready || state.pending) return;
     const token = generation;
     const key = master;
     const epoch = manifest?.epoch;
@@ -241,7 +243,7 @@
     node.setAttribute('aria-busy', 'true');
     try {
       const html = await decryptBlock(node.dataset.sealed, epoch, key);
-      if (token !== generation || !node.isConnected || !wantsReading(state)) return;
+      if (token !== generation || !node.isConnected || !master) return;
       const fragment = safeFragment(html);
       // The site's general MathJax configuration permits extension macros. Keep
       // resource/HTML commands out of this isolated reader before any typesetting.
@@ -260,16 +262,36 @@
       }
       state.reading.replaceChildren(fragment);
       state.reading.hidden = false;
-      state.revealed = true;
-      node.dataset.revealed = 'true';
-      state.button.setAttribute('aria-expanded', 'true');
-      typesetReading(node, state, token);
+      node.dataset.ready = 'true';
+      // Typeset while masked, before the user reveals the paragraph. Browser
+      // fonts and responsive widths then update hidden and visible flow alike.
+      const typesetting = mathQueue.catch(() => {}).then(async () => {
+        const math = window.MathJax;
+        if (math?.startup?.promise) await math.startup.promise;
+        if (token !== generation || !node.isConnected || !master) return;
+        if (math?.typesetPromise) await math.typesetPromise([state.reading]);
+      });
+      mathQueue = typesetting.catch(() => {});
+      await mathQueue;
+      if (token !== generation || !node.isConnected || !master) return;
+      state.ready = true;
+      renderState(node, state);
     } catch {
       if (token === generation && node.isConnected) state.button.setAttribute('aria-label', '此段暂时无法解密，请刷新页面后重新验证');
     } finally {
       state.pending = false;
       node.removeAttribute('aria-busy');
+      // A page can return from BFCache while an old typesetting task settles.
+      // Resume preparation for the new session rather than waiting for a hover.
+      if (token !== generation && master && node.isConnected && !state.ready) prepareReading(node, state);
     }
+  }
+
+  async function prepareReadings() {
+    await Promise.all(blocks().map(node => {
+      const state = states.get(node);
+      return state ? prepareReading(node, state) : undefined;
+    }));
   }
 
   function prepareBlocks() {
@@ -301,7 +323,9 @@
       const reading = document.createElement(node.classList.contains('sealed-inline') ? 'span' : 'div');
       reading.className = 'sealed-reading';
       reading.hidden = true;
-      const state = {button, reading, hover: false, focus: false, pinned: false, revealed: false, pending: false};
+      reading.inert = true;
+      reading.setAttribute('aria-hidden', 'true');
+      const state = {button, reading, hover: false, focus: false, pinned: false, revealed: false, ready: false, pending: false};
       states.set(node, state);
       node.replaceChildren(button, reading);
       node.dataset.revealed = 'false';
@@ -331,6 +355,7 @@
         state.pinned = !state.pinned;
         renderState(node, state);
       });
+      if (master) prepareReading(node, state);
     }
   }
 
@@ -366,6 +391,8 @@
       try { sessionStorage.setItem(storageKey, JSON.stringify({version: 1, epoch: currentManifest.epoch, key: base64(raw)})); } catch {}
       raw.fill(0);
       updateAccessUi();
+      await prepareReadings();
+      if (generation !== token) return;
       setStatus('通过');
       dialog.close();
       opener.focus();
@@ -402,6 +429,7 @@
       if (generation !== token) return;
       master = key;
       updateAccessUi();
+      await prepareReadings();
     } catch { lock(false); }
   }
   window.addEventListener('pageshow', event => { if (event.persisted) restoreSession(); });
