@@ -4,9 +4,9 @@ url: https://ushg8877.github.io
 lang: zh-CN
 timezone: Asia/Shanghai
 permalink: /posts/:title/
-markdown: kramdown
-kramdown:
-  math_engine: null
+# Require a real table header separator; pipes inside inline TeX remain text.
+# MathJax in the article layout renders the preserved formulas.
+markdown: GFM
 exclude: [README.md, Gemfile, Gemfile.lock]
 giscus:
   enabled: true
