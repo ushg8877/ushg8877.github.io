@@ -162,6 +162,7 @@
     state.ready = false;
     state.revealed = false;
     delete node.dataset.ready;
+    delete node.dataset.lineMask;
     node.dataset.revealed = 'false';
     state.button.setAttribute('aria-expanded', 'false');
   }
@@ -262,6 +263,21 @@
         // Move its sanitized children so a span never contains a block paragraph.
         const children = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
         if (children.length === 1 && children[0].nodeName === 'P') fragment.replaceChildren(...children[0].childNodes);
+      }
+      // The mask is an inline decoration around each paragraph's text. Its
+      // last visual line ends where the text ends, without changing text flow.
+      const paragraphs = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
+      if (!node.classList.contains('sealed-inline') && paragraphs.length && paragraphs.every(child => child.nodeName === 'P')) {
+        for (const paragraph of paragraphs) {
+          const mask = document.createElement('span');
+          mask.className = 'sealed-line-mask';
+          const text = document.createElement('span');
+          text.className = 'sealed-line-text';
+          text.append(...paragraph.childNodes);
+          mask.append(text);
+          paragraph.append(mask);
+        }
+        node.dataset.lineMask = 'true';
       }
       state.reading.replaceChildren(fragment);
       state.reading.hidden = false;

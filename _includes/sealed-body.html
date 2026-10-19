@@ -1,0 +1,60 @@
+{%- comment -%}Render public omission counts at build time, before JS or network requests.
+Only complete encrypted paragraphs are folded. Mixed sentences remain untouched.
+Legacy count entries are bound to the exact public ciphertext, never to an ordinal.
+{%- endcomment -%}
+{%- capture newline %}
+{% endcapture -%}
+{%- assign lines = include.html | split: newline -%}
+{%- assign run_html = '' -%}
+{%- assign run_count = 0 -%}
+{%- assign run_blocks = 0 -%}
+{%- for line in lines -%}
+  {%- assign rendered_line = line -%}
+  {%- assign remainder = line -%}
+  {%- assign line_count = 0 -%}
+  {%- assign line_blocks = 0 -%}
+  {%- assign line_known = true -%}
+  {%- assign kinds = 'div,span' | split: ',' -%}
+  {%- for kind in kinds -%}
+    {%- if kind == 'div' -%}
+      {%- assign opening = '<div class="sealed-block" data-sealed="' -%}
+      {%- assign closing = '</span></div>' -%}
+    {%- else -%}
+      {%- assign opening = '<span class="sealed-block sealed-inline" data-sealed="' -%}
+      {%- assign closing = '</span></span>' -%}
+    {%- endif -%}
+    {%- assign chunks = line | split: opening -%}
+    {%- for chunk in chunks offset:1 -%}
+      {%- assign inside = chunk | split: closing | first -%}
+      {%- capture marker -%}{{ opening }}{{ inside }}{{ closing }}{%- endcapture -%}
+      {%- assign cipher = inside | split: '"' | first -%}
+      {%- assign count = nil -%}
+      {%- if marker contains 'data-chars="' -%}
+        {%- assign count = marker | split: 'data-chars="' | last | split: '"' | first | plus: 0 -%}
+      {%- else -%}
+        {%- assign legacy = site.data.sealed_counts | where: 'cipher', cipher | first -%}
+        {%- assign count = legacy.chars -%}
+        {%- if count != nil -%}
+          {%- capture counted_placeholder -%}class="sealed-placeholder" data-chars="{{ count }}"{%- endcapture -%}
+          {%- assign counted_marker = marker | replace: 'class="sealed-placeholder"', counted_placeholder -%}
+          {%- assign rendered_line = rendered_line | replace: marker, counted_marker -%}
+        {%- endif -%}
+      {%- endif -%}
+      {%- if count == nil -%}{%- assign line_known = false -%}{%- endif -%}
+      {%- assign line_count = line_count | plus: count -%}
+      {%- assign line_blocks = line_blocks | plus: 1 -%}
+      {%- assign remainder = remainder | remove: marker -%}
+    {%- endfor -%}
+  {%- endfor -%}
+  {%- assign remainder = remainder | remove: '<p>' | remove: '</p>' | strip -%}
+  {%- if remainder == '' and line_known -%}
+    {%- assign run_html = run_html | append: rendered_line | append: newline -%}
+    {%- assign run_count = run_count | plus: line_count -%}
+    {%- assign run_blocks = run_blocks | plus: line_blocks -%}
+  {%- else -%}
+    {%- if run_blocks > 0 -%}<div class="sealed-run"><p class="sealed-summary">【此处省略 {{ run_count }} 字】</p><div class="sealed-run-content" hidden>{{ run_html }}</div></div>{{ newline }}{%- else -%}{{ run_html }}{%- endif -%}
+    {{- rendered_line -}}{{- newline -}}
+    {%- assign run_html = '' -%}{%- assign run_count = 0 -%}{%- assign run_blocks = 0 -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- if run_blocks > 0 -%}<div class="sealed-run"><p class="sealed-summary">【此处省略 {{ run_count }} 字】</p><div class="sealed-run-content" hidden>{{ run_html }}</div></div>{%- else -%}{{ run_html }}{%- endif -%}

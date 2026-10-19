@@ -18,10 +18,11 @@ layout: default
     {% if site.giscus.enabled == true %}<a href="#article-comments">点赞与评论 ↓</a>{% endif %}
   </div>
   </header>
-  <div id="article-body" class="prose" lang="zh-CN">{{ content }}</div>
-  <template data-article-version="zh" data-title="{{ page.title | escape }}">{{ content }}</template>
-  {% if ja_body != '' %}{% assign ja_title = page.translations.ja.title | default: '' | strip %}{% if ja_title == '' %}{% assign ja_title = page.title %}{% endif %}<template data-article-version="ja" data-title="{{ ja_title | escape }}">{{ page.translations.ja.body | markdownify }}</template>{% endif %}
-  {% if en_body != '' %}{% assign en_title = page.translations.en.title | default: '' | strip %}{% if en_title == '' %}{% assign en_title = page.title %}{% endif %}<template data-article-version="en" data-title="{{ en_title | escape }}">{{ page.translations.en.body | markdownify }}</template>{% endif %}
+  {% capture sealed_content %}{% include sealed-body.html html=content %}{% endcapture %}
+  <div id="article-body" class="prose" lang="zh-CN">{{ sealed_content }}</div>
+  <template data-article-version="zh" data-title="{{ page.title | escape }}">{{ sealed_content }}</template>
+  {% if ja_body != '' %}{% assign ja_title = page.translations.ja.title | default: '' | strip %}{% if ja_title == '' %}{% assign ja_title = page.title %}{% endif %}{% assign localized_html = page.translations.ja.body | markdownify %}<template data-article-version="ja" data-title="{{ ja_title | escape }}">{% include sealed-body.html html=localized_html %}</template>{% endif %}
+  {% if en_body != '' %}{% assign en_title = page.translations.en.title | default: '' | strip %}{% if en_title == '' %}{% assign en_title = page.title %}{% endif %}{% assign localized_html = page.translations.en.body | markdownify %}<template data-article-version="en" data-title="{{ en_title | escape }}">{% include sealed-body.html html=localized_html %}</template>{% endif %}
   <span id="article-language-status" class="sr-only" role="status"></span>
   <nav class="post-pagination" aria-label="相邻文章">{% include ordered-posts.html mode="pagination" %}</nav>
   {% include article-engagement.html %}
