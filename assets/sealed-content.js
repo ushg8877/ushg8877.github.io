@@ -15,10 +15,6 @@
     return bytes;
   }
 
-  function base64(bytes) {
-    return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-
   function validateManifest(value) {
     if (!hasFields(value, ['version', 'epoch', 'codes']) || value.version !== 1 || !epochPattern.test(value.epoch) || !Array.isArray(value.codes) || value.codes.length > 512) throw Error('Invalid manifest');
     const ids = new Set();
@@ -78,8 +74,6 @@
   if (!dialog || !opener || !form || !input || !status) return;
   const articleId = dialog.dataset.article;
   if (!epochPattern.test(articleId || '')) return;
-  const storageKey = 'kamome.access.article.v1.' + articleId;
-  try { sessionStorage.removeItem('kamome.access.session.v1'); } catch {}
 
   let manifest = null;
   let manifestPromise = null;
@@ -98,8 +92,16 @@
     status.dataset.error = String(error);
     input.setAttribute('aria-invalid', String(error));
   };
-  const forgetSession = () => { try { sessionStorage.removeItem(storageKey); } catch {} };
-  const sessionData = () => { try { return JSON.parse(sessionStorage.getItem(storageKey) || 'null'); } catch { return null; } };
+  // Older versions persisted raw keys. Remove only this feature's old entries;
+  // current verification lives in memory and is never restored after navigation.
+  const forgetSession = () => {
+    try {
+      for (const key of Object.keys(sessionStorage)) {
+        if (key === 'kamome.access.session.v1' || key.startsWith('kamome.access.article.v1.')) sessionStorage.removeItem(key);
+      }
+    } catch {}
+  };
+  forgetSession();
 
   async function loadManifest(fresh = false) {
     if (manifestPromise && !fresh) return manifestPromise;
@@ -121,7 +123,7 @@
     manifestPromise = task;
     try {
       const next = await task;
-      if (manifest && manifest.epoch !== next.epoch) lock(false);
+      if (master && manifest && manifest.epoch !== next.epoch) lock(false);
       manifest = next;
       return next;
     } catch (error) {
@@ -171,7 +173,12 @@
     generation++;
     master = null;
     forgetSession();
+    clearTimeout(autoSubmitTimer);
+    busy = false;
     input.value = '';
+    input.disabled = false;
+    input.removeAttribute('aria-busy');
+    if (dialog.open) dialog.close();
     for (const node of blocks()) {
       const state = states.get(node);
       if (!state) continue;
@@ -179,7 +186,7 @@
       clearReading(node, state);
     }
     updateAccessUi();
-    if (announce) setStatus('已退出验证，黑幕已收起。');
+    setStatus(announce ? '已退出验证，黑幕已收起。' : '');
   }
 
   // Parse into an inert template, then copy only supported markup into new nodes.
@@ -508,15 +515,16 @@
     const code = input.value;
     input.value = '';
     setStatus('正在验证…');
+    const token = ++generation;
+    let raw = null;
     try {
       const currentManifest = await loadManifest(true);
-      const token = ++generation;
-      const raw = await unwrapCode(currentManifest, code);
+      if (generation !== token) return;
+      raw = await unwrapCode(currentManifest, code);
       const nextKey = await importMaster(raw);
+      raw.fill(0);
       if (generation !== token) return;
       master = nextKey;
-      try { sessionStorage.setItem(storageKey, JSON.stringify({version: 1, epoch: currentManifest.epoch, key: base64(raw)})); } catch {}
-      raw.fill(0);
       updateAccessUi();
       await prepareReadings();
       if (generation !== token) return;
@@ -524,41 +532,23 @@
       dialog.close();
       opener.focus();
     } catch {
-      setStatus(manifest ? '访问码不正确、已失效，或验证资料暂时无法加载。请确认后重试。' : '验证资料暂时无法加载，请稍后重试。', true);
+      if (generation === token) setStatus(manifest ? '访问码不正确、已失效，或验证资料暂时无法加载。请确认后重试。' : '验证资料暂时无法加载，请稍后重试。', true);
     } finally {
-      busy = false;
-      input.disabled = false;
-      input.removeAttribute('aria-busy');
-      if (dialog.open) input.focus();
+      raw?.fill(0);
+      if (generation === token) {
+        busy = false;
+        input.disabled = false;
+        input.removeAttribute('aria-busy');
+        if (dialog.open) input.focus();
+      }
     }
   });
 
   prepareBlocks();
+  updateAccessUi();
   if (article) new MutationObserver(prepareBlocks).observe(article, {childList: true, subtree: true});
-  // BFCache must not restore an already revealed secret without rechecking the epoch.
-  window.addEventListener('pagehide', () => {
-    generation++;
-    master = null;
-    for (const node of blocks()) {
-      const state = states.get(node);
-      if (state) { state.hover = state.focus = state.pinned = false; clearReading(node, state); }
-    }
-    updateAccessUi();
-  });
-
-  async function restoreSession() {
-    try {
-      const currentManifest = await loadManifest(true);
-      const saved = sessionData();
-      if (!saved || saved.version !== 1 || saved.epoch !== currentManifest.epoch) { forgetSession(); updateAccessUi(); return; }
-      const token = generation;
-      const key = await importMaster(unbase64(saved.key, 32));
-      if (generation !== token) return;
-      master = key;
-      updateAccessUi();
-      await prepareReadings();
-    } catch { lock(false); }
-  }
-  window.addEventListener('pageshow', event => { if (event.persisted) restoreSession(); });
-  restoreSession();
+  // Refresh, navigation, and history restoration all require a new code entry.
+  // Invalidate pending verification too, so a late response cannot unlock it.
+  window.addEventListener('pagehide', () => lock(false));
+  window.addEventListener('pageshow', event => { if (event.persisted) lock(false); });
 })();
