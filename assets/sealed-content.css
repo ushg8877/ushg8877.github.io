@@ -18,6 +18,11 @@
 .sealed-block .sealed-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .sealed-block .sealed-toggle:disabled{cursor:default;opacity:1}
 .sealed-group{display:flow-root;margin:1em 0}
+.sealed-run{margin:1em 0}
+.sealed-run>.sealed-summary{margin:0;color:var(--muted);font:inherit;cursor:default}
+.sealed-run-content{display:flow-root}
+.sealed-run-content>:first-child{margin-top:0}
+.sealed-run-content>:last-child{margin-bottom:0}
 .sealed-group>.sealed-part{width:min(var(--sealed-width,22em),100%)}
 .sealed-group>.sealed-part:first-child{margin-top:0}
 .sealed-group>.sealed-part:last-child{margin-bottom:0}

@@ -131,6 +131,7 @@
   function updateAccessUi() {
     opener.dataset.verified = String(Boolean(master));
     opener.querySelector('span').textContent = master ? '通过' : '验证访问码';
+    updateSummaries();
     for (const node of blocks()) {
       const state = states.get(node);
       if (state) {
@@ -294,14 +295,78 @@
     }));
   }
 
+  function updateSummaries() {
+    for (const run of article?.querySelectorAll('.sealed-run') || []) {
+      run.querySelector(':scope > .sealed-summary').hidden = Boolean(master);
+      run.querySelector(':scope > .sealed-run-content').hidden = !master;
+    }
+  }
+
+  function wholeSecret(node) {
+    if (node.nodeType === 8 || (node.nodeType === 3 && !node.textContent.trim())) return {blocks: 0, count: 0, known: true};
+    if (node.nodeType !== 1) return null;
+    if (node.matches('.sealed-group,.sealed-block[data-sealed]')) {
+      const value = node.dataset.chars || '';
+      const known = /^\d{1,8}$/.test(value) && Number(value) <= 4_000_000;
+      return {blocks: 1, count: known ? Number(value) : 0, known};
+    }
+    if (!/^(P|DIV|SECTION|BLOCKQUOTE|UL|OL|LI|SPAN|STRONG|EM|B|I|U|S|DEL|H[1-6]|BR)$/.test(node.tagName) || node.classList.contains('sealed-run')) return null;
+    const result = {blocks: 0, count: 0, known: true};
+    for (const child of node.childNodes) {
+      const part = wholeSecret(child);
+      if (!part) return null; // Even one public word keeps this paragraph inline.
+      result.blocks += part.blocks;
+      result.count += part.count;
+      result.known &&= part.known;
+    }
+    return result;
+  }
+
+  function prepareSummaries(parent = article) {
+    if (!parent) return;
+    let nodes = [], count = 0, known = true, blocks = 0;
+    function flush() {
+      if (blocks) {
+        const run = document.createElement('div');
+        run.className = 'sealed-run';
+        const summary = document.createElement('p');
+        summary.className = 'sealed-summary';
+        summary.textContent = `【此处省略 ${known ? count : '…'} 字】`;
+        summary.hidden = Boolean(master);
+        const content = document.createElement('div');
+        content.className = 'sealed-run-content';
+        content.hidden = !master;
+        nodes[0].before(run);
+        content.append(...nodes);
+        run.append(summary, content);
+      }
+      nodes = []; count = 0; known = true; blocks = 0;
+    }
+    for (const node of [...parent.childNodes]) {
+      const part = wholeSecret(node);
+      if (part) {
+        if (part.blocks || nodes.length) nodes.push(node);
+        blocks += part.blocks; count += part.count; known &&= part.known;
+        continue;
+      }
+      flush();
+      // Recurse only into block containers, never the middle of a mixed sentence.
+      if (node.nodeType === 1 && /^(DIV|SECTION|BLOCKQUOTE|LI|TD|TH)$/.test(node.tagName) && !node.classList.contains('sealed-run')) prepareSummaries(node);
+    }
+    flush();
+  }
+
   function prepareBlocks() {
     const pending = blocks();
     for (const node of pending) {
       if (states.has(node)) continue;
-      const layout = node.querySelector(':scope > .sealed-placeholder')?.dataset.parts;
+      const placeholder = node.querySelector(':scope > .sealed-placeholder');
+      const layout = placeholder?.dataset.parts;
+      if (placeholder?.dataset.chars !== undefined) node.dataset.chars = placeholder.dataset.chars;
       if (!node.classList.contains('sealed-inline') && layout && /^(?:[1-9]|[1-3][0-9]|4[0-4])(?:,(?:[1-9]|[1-3][0-9]|4[0-4]))*$/.test(layout)) {
         const group = document.createElement('div');
         group.className = 'sealed-group';
+        if (node.dataset.chars !== undefined) group.dataset.chars = node.dataset.chars;
         layout.split(',').forEach((width, index) => {
           const part = document.createElement('div');
           part.className = 'sealed-block sealed-part';
@@ -357,6 +422,7 @@
       });
       if (master) prepareReading(node, state);
     }
+    prepareSummaries();
   }
 
   opener.addEventListener('click', openDialog);
