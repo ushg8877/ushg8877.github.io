@@ -1,8 +1,8 @@
 {
   "languages": {
     "zh": {
-      "html": "<p><img src=\"/assets/images/20261027-222444-066275.png\" alt=\"图片说明\" loading=\"lazy\" referrerpolicy=\"no-referrer\"></p>\n<p>很不错呢</p>\n",
-      "source": "\n![图片说明](/assets/images/20261027-222444-066275.png)\n\n很不错呢"
+      "html": "<p><img src=\"/assets/images/20261027-222444-066275.png\" alt=\"图片说明\" loading=\"lazy\" referrerpolicy=\"no-referrer\"></p>\n<p>虽然好像很逆天，</p>\n<p>但是好像对我而言有点戳到呢。</p>\n",
+      "source": "\n![图片说明](/assets/images/20261027-222444-066275.png)\n\n虽然好像很逆天，\n\n但是好像对我而言有点戳到呢。"
     }
   },
   "path": "_posts/2026-10-27-manio-search.md",
