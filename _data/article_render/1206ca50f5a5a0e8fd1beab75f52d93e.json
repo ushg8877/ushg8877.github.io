@@ -1,0 +1,10 @@
+{
+  "languages": {
+    "zh": {
+      "html": "<p><img src=\"/assets/images/20261027-222444-066275.png\" alt=\"图片说明\" loading=\"lazy\" referrerpolicy=\"no-referrer\"></p>\n<p>很不错呢</p>\n",
+      "source": "\n![图片说明](/assets/images/20261027-222444-066275.png)\n\n很不错呢"
+    }
+  },
+  "path": "_posts/2026-10-27-manio-search.md",
+  "version": 1
+}
