@@ -1,0 +1,15 @@
+{%- comment -%}Use the local preview parser's static HTML only for the matching source.
+Re-running the same site converter detects edits made outside the manager.
+Ciphertext stays ciphertext; sealed-body still creates omission counts at build time.
+{%- endcomment -%}
+{%- assign prepared = site.data.article_render[page.access_id] -%}
+{%- assign version = prepared.languages[include.language] -%}
+{%- assign article_html = include.html -%}
+{%- if prepared.version == 1 and prepared.path == page.path and version -%}
+  {%- assign expected_html = version.source | markdownify | strip -%}
+  {%- assign current_html = include.html | strip -%}
+  {%- if expected_html == current_html -%}
+    {%- assign article_html = version.html -%}
+  {%- endif -%}
+{%- endif -%}
+{%- include sealed-body.html html=article_html -%}

@@ -1,0 +1,10 @@
+{
+  "languages": {
+    "zh": {
+      "html": "<p>基本信息：</p>\n<table>\n<thead>\n<tr>\n<th>项目</th>\n<th>信息</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>发行商</td>\n<td>AKABEiSOFT2（あかべぇそふとつぅ）</td>\n</tr>\n<tr>\n<td>发行时间</td>\n<td>2008 年 5 月 29 日（日本原版）</td>\n</tr>\n<tr>\n<td>剧本</td>\n<td>るーすぼーい（Loose Boy）</td>\n</tr>\n<tr>\n<td>原画</td>\n<td>有葉（Alpha）</td>\n</tr>\n<tr>\n<td>游戏平台</td>\n<td>PC（Windows）</td>\n</tr>\n<tr>\n<td>游戏类型</td>\n<td>ADV / 悬疑恋爱视觉小说</td>\n</tr>\n</tbody>\n</table>\n<p><img src=\"https://images.openai.com/static-rsc-4/6ROAcBxyQc5yxScdXJG0VLygxM4y_lFLE3PC1HS4fekylXnsFJD6zniPNYWF7uX1b7l80cqQ0BsZYbEhkKSugzsiBaRQRrzCBDpisz5yzdPZoycx3CVMdEfhl7iM_Hc-0l_5ADXYZWh9Ru91jNM3G7pIa7s9ENDmzG8v84YwyO11ZQF5K5Mnjq0eIL52tKGc?purpose=fullsize\" alt=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer\"></p>\n",
+      "source": "基本信息：\n\n\n| 项目   | 信息                     |\n| ---- | ---------------------- |\n| 发行商  | AKABEiSOFT2（あかべぇそふとつぅ） |\n| 发行时间 | 2008 年 5 月 29 日（日本原版）  |\n| 剧本   | るーすぼーい（Loose Boy）      |\n| 原画   | 有葉（Alpha）              |\n| 游戏平台 | PC（Windows）            |\n| 游戏类型 | ADV / 悬疑恋爱视觉小说         |\n\n![](https://images.openai.com/static-rsc-4/6ROAcBxyQc5yxScdXJG0VLygxM4y_lFLE3PC1HS4fekylXnsFJD6zniPNYWF7uX1b7l80cqQ0BsZYbEhkKSugzsiBaRQRrzCBDpisz5yzdPZoycx3CVMdEfhl7iM_Hc-0l_5ADXYZWh9Ru91jNM3G7pIa7s9ENDmzG8v84YwyO11ZQF5K5Mnjq0eIL52tKGc?purpose=fullsize)"
+    }
+  },
+  "path": "_posts/2026-10-14-gstring-maou.md",
+  "version": 1
+}
