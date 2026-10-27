@@ -11,6 +11,11 @@
 .access-dialog input:focus-visible{outline-color:var(--soft)}
 .access-dialog input[aria-invalid="true"]{border-color:#bd4b4b;outline-color:#bd4b4b}
 .access-dialog input[aria-busy="true"]{cursor:wait}
+.sealed-verifying{display:grid;gap:10px;margin-top:12px;padding:14px 18px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:16px/1.6 var(--sans)}
+.sealed-progress{position:fixed;z-index:30;right:24px;bottom:24px;display:grid;gap:10px;width:min(310px,calc(100vw - 48px));box-sizing:border-box;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);box-shadow:0 6px 24px #0002;font:16px/1.6 var(--sans)}
+.sealed-progress[hidden],.sealed-verifying[hidden]{display:none}
+.sealed-progress progress,.sealed-verifying progress{display:block;width:100%;height:8px;accent-color:var(--accent)}
+.sealed-progress button{justify-self:end;padding:3px 12px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
 .access-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
 .sealed-block{position:relative;display:block;width:min(22em,100%);min-height:1.35em;margin:1em 0;border:0;border-radius:0;background:#222;color:transparent;overflow-wrap:anywhere;vertical-align:baseline}
 .sealed-placeholder{visibility:hidden}

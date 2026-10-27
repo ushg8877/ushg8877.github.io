@@ -61,7 +61,7 @@
 
   // Available to offline interoperability tests; no browser debug or key API.
   if (typeof document === 'undefined') {
-    if (typeof module !== 'undefined') module.exports = {unbase64, base64, validateManifest, unwrapCode, importMaster, decryptBlock};
+    if (typeof module !== 'undefined') module.exports = {unbase64, validateManifest, unwrapCode, importMaster, decryptBlock};
     return;
   }
 
@@ -84,9 +84,99 @@
   let autoSubmitTimer = null;
   let states = new WeakMap();
   let mathQueue = Promise.resolve();
+  let decodedBlocks = new WeakMap();
+  let readingQueue = [];
+  let workerGeneration = null;
+  let queueTimer = null;
+  let progressTimer = null;
   let publicCountsPromise = null;
   const countRequests = new WeakSet();
   const blocks = () => [...(article?.querySelectorAll('.sealed-block[data-sealed]') || [])];
+  const progressPanel = document.createElement('section');
+  progressPanel.className = 'sealed-progress';
+  progressPanel.hidden = true;
+  progressPanel.setAttribute('aria-label', '黑幕解密进度');
+  const progressLabel = document.createElement('span');
+  const progressBar = document.createElement('progress');
+  progressBar.setAttribute('aria-label', '已处理的段落');
+  const retryButton = document.createElement('button');
+  retryButton.type = 'button';
+  retryButton.textContent = '重试';
+  retryButton.hidden = true;
+  progressPanel.append(progressLabel, progressBar, retryButton);
+  document.body.append(progressPanel);
+  const verification = document.createElement('div');
+  verification.className = 'sealed-verifying';
+  verification.hidden = true;
+  const verificationLabel = document.createElement('span');
+  const verificationBar = document.createElement('progress');
+  verificationBar.setAttribute('aria-label', '验证访问码');
+  verification.append(verificationLabel, verificationBar);
+  dialog.append(verification);
+
+  function updatePreparationProgress() {
+    if (!master) { progressPanel.hidden = true; return; }
+    const current = blocks().map(node => states.get(node)).filter(Boolean);
+    const ready = current.filter(state => state.ready).length;
+    const failed = current.filter(state => state.failed).length;
+    const total = current.length;
+    if (!total) { progressPanel.hidden = true; return; }
+    clearTimeout(progressTimer);
+    progressPanel.hidden = false;
+    progressBar.max = total;
+    progressBar.value = ready + failed;
+    progressLabel.textContent = failed
+      ? `已准备 ${ready} / ${total} 段，${failed} 段暂时失败`
+      : ready === total ? `黑幕已准备好 · ${total} 段` : `正在准备黑幕 · ${ready} / ${total} 段`;
+    retryButton.hidden = !failed || ready + failed < total;
+    if (ready === total) progressTimer = setTimeout(() => { progressPanel.hidden = true; }, 1800);
+  }
+
+  function queueReading(node, state, urgent = false) {
+    if (!master || !node.isConnected || state.ready || state.failed || state.pending === generation) return;
+    if (state.queued) {
+      if (urgent) {
+        readingQueue = readingQueue.filter(item => item.node !== node);
+        readingQueue.unshift({node, state});
+      }
+      return;
+    }
+    state.queued = true;
+    if (urgent) readingQueue.unshift({node, state});
+    else readingQueue.push({node, state});
+    if (workerGeneration === generation) return;
+    const token = generation;
+    workerGeneration = token;
+    queueTimer = setTimeout(() => drainReadings(token), 0);
+  }
+
+  async function drainReadings(token) {
+    try {
+      while (token === generation && master && readingQueue.length) {
+        const batch = readingQueue.splice(0, 8);
+        for (const {node, state} of batch) {
+          if (token !== generation || !master) return;
+          state.queued = false;
+          if (node.isConnected) await prepareReading(node, state);
+        }
+        if (token !== generation || !master) return;
+        updatePreparationProgress();
+        // Yield between batches so progress paints and scrolling/hover stay live.
+        await new Promise(resolve => setTimeout(resolve, 8));
+      }
+    } finally {
+      if (workerGeneration === token) workerGeneration = null;
+    }
+  }
+
+  retryButton.addEventListener('click', () => {
+    decodedBlocks = new WeakMap();
+    for (const node of blocks()) {
+      const state = states.get(node);
+      if (state?.failed) state.failed = false;
+    }
+    prepareReadings();
+  });
   const setStatus = (text, error = false) => {
     status.textContent = text;
     status.dataset.error = String(error);
@@ -158,13 +248,21 @@
   function clearReading(node, state) {
     try { window.MathJax?.typesetClear?.([state.reading]); } catch {}
     state.reading.replaceChildren();
+    // A late typesetter must only retain a detached node from the old session.
+    const replacement = state.reading.cloneNode(false);
+    state.reading.replaceWith(replacement);
+    state.reading = replacement;
     state.reading.hidden = true;
     state.reading.inert = true;
     state.reading.setAttribute('aria-hidden', 'true');
     state.ready = false;
+    state.pending = null;
+    state.queued = false;
+    state.failed = false;
     state.revealed = false;
     delete node.dataset.ready;
     delete node.dataset.lineMask;
+    node.removeAttribute('aria-busy');
     node.dataset.revealed = 'false';
     state.button.setAttribute('aria-expanded', 'false');
   }
@@ -172,6 +270,14 @@
   function lock(announce = true) {
     generation++;
     master = null;
+    decodedBlocks = new WeakMap();
+    readingQueue = [];
+    workerGeneration = null;
+    mathQueue = Promise.resolve();
+    clearTimeout(queueTimer);
+    clearTimeout(progressTimer);
+    progressPanel.hidden = true;
+    verification.hidden = true;
     forgetSession();
     clearTimeout(autoSubmitTimer);
     busy = false;
@@ -242,29 +348,48 @@
     state.reading.inert = !revealed;
     state.reading.setAttribute('aria-hidden', String(!revealed));
     state.button.setAttribute('aria-expanded', String(revealed));
-    if (master && !state.ready) prepareReading(node, state);
+    if (master && !state.ready) queueReading(node, state, wantsReading(state));
+  }
+
+  async function decodedContent(node, token, key, epoch) {
+    const source = node.classList.contains('sealed-part') ? node.closest('.sealed-group') : node;
+    let task = decodedBlocks.get(source);
+    if (!task) {
+      task = (async () => {
+        const html = await decryptBlock(source.dataset.sealed, epoch, key);
+        if (token !== generation || !master || !source.isConnected) return null;
+        const fragment = safeFragment(html);
+        if (/\\(?:href|url|require|includegraphics|class|style|cssId|htmlClass|htmlId|htmlStyle|htmlData|def|gdef|edef|xdef|let|newcommand|renewcommand|providecommand|csname|expandafter|input|include|catcode)\b/i.test(fragment.textContent)) throw Error('Unsupported active TeX command');
+        const parts = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
+        return {fragment, parts};
+      })();
+      decodedBlocks.set(source, task);
+      // Retain one failed result until explicit retry, avoiding hundreds of
+      // identical decryptions when one large envelope is damaged.
+    }
+    return task;
   }
 
   async function prepareReading(node, state) {
-    if (!master || state.ready || state.pending) return;
+    if (!master || state.ready || state.failed || state.pending === generation) return;
     const token = generation;
     const key = master;
     const epoch = manifest?.epoch;
-    state.pending = true;
+    const reading = state.reading;
+    state.pending = token;
     node.setAttribute('aria-busy', 'true');
     try {
-      const html = await decryptBlock(node.dataset.sealed, epoch, key);
+      const decoded = await decodedContent(node, token, key, epoch);
       if (token !== generation || !node.isConnected || !master) return;
-      const fragment = safeFragment(html);
-      // The site's general MathJax configuration permits extension macros. Keep
-      // resource/HTML commands out of this isolated reader before any typesetting.
-      if (/\\(?:href|url|require|includegraphics|class|style|cssId|htmlClass|htmlId|htmlStyle|htmlData|def|gdef|edef|xdef|let|newcommand|renewcommand|providecommand|csname|expandafter|input|include|catcode)\b/i.test(fragment.textContent)) throw Error('Unsupported active TeX command');
+      if (!decoded) return;
+      let fragment;
       if (node.hasAttribute('data-part')) {
-        const parts = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
-        const part = parts[Number(node.dataset.part)];
+        const part = decoded.parts[Number(node.dataset.part)];
         if (!part) throw Error('Missing paragraph');
-        fragment.replaceChildren(part);
-      }
+        fragment = document.createDocumentFragment();
+        fragment.append(part.cloneNode(true));
+      } else fragment = decoded.fragment.cloneNode(true);
+      const needsMath = /(?:\\\(|\\\[|\$|\\begin\{)/.test(fragment.textContent);
       if (node.classList.contains('sealed-inline')) {
         // Inline Markdown is emitted as a single paragraph by the authoring app.
         // Move its sanitized children so a span never contains a block paragraph.
@@ -286,38 +411,49 @@
         }
         node.dataset.lineMask = 'true';
       }
-      state.reading.replaceChildren(fragment);
-      state.reading.hidden = false;
+      reading.replaceChildren(fragment);
+      reading.hidden = false;
       node.dataset.ready = 'true';
       // Typeset while masked, before the user reveals the paragraph. Browser
       // fonts and responsive widths then update hidden and visible flow alike.
-      const typesetting = mathQueue.catch(() => {}).then(async () => {
-        const math = window.MathJax;
-        if (math?.startup?.promise) await math.startup.promise;
-        if (token !== generation || !node.isConnected || !master) return;
-        if (math?.typesetPromise) await math.typesetPromise([state.reading]);
-      });
-      mathQueue = typesetting.catch(() => {});
-      await mathQueue;
+      if (needsMath) {
+        const typesetting = mathQueue.catch(() => {}).then(async () => {
+          const math = window.MathJax;
+          if (math?.startup?.promise) await math.startup.promise;
+          if (token !== generation || !node.isConnected || !master) return;
+          if (math?.typesetPromise) await math.typesetPromise([reading]);
+        });
+        mathQueue = typesetting.catch(() => {});
+        await typesetting;
+      }
       if (token !== generation || !node.isConnected || !master) return;
       state.ready = true;
       renderState(node, state);
     } catch {
-      if (token === generation && node.isConnected) state.button.setAttribute('aria-label', '此段暂时无法解密，请刷新页面后重新验证');
+      if (token === generation && node.isConnected) {
+        state.failed = true;
+        state.button.setAttribute('aria-label', '此段暂时无法解密，请重试');
+      }
     } finally {
-      state.pending = false;
-      node.removeAttribute('aria-busy');
-      // A page can return from BFCache while an old typesetting task settles.
-      // Resume preparation for the new session rather than waiting for a hover.
-      if (token !== generation && master && node.isConnected && !state.ready) prepareReading(node, state);
+      if (state.pending === token) {
+        state.pending = null;
+        node.removeAttribute('aria-busy');
+      }
     }
   }
 
-  async function prepareReadings() {
-    await Promise.all(blocks().map(node => {
-      const state = states.get(node);
-      return state ? prepareReading(node, state) : undefined;
+  function prepareReadings() {
+    if (!master) return;
+    const current = blocks();
+    const visible = new Set(current.filter(node => {
+      const rect = node.getBoundingClientRect();
+      return rect.bottom >= -300 && rect.top <= innerHeight + 600;
     }));
+    for (const node of [...current.filter(node => visible.has(node)), ...current.filter(node => !visible.has(node))]) {
+      const state = states.get(node);
+      if (state) queueReading(node, state);
+    }
+    updatePreparationProgress();
   }
 
   function updateSummaries() {
@@ -433,11 +569,13 @@
       if (!node.classList.contains('sealed-inline') && layout && /^(?:[1-9]|[1-3][0-9]|4[0-4])(?:,(?:[1-9]|[1-3][0-9]|4[0-4]))*$/.test(layout)) {
         const group = document.createElement('div');
         group.className = 'sealed-group';
+        group.dataset.sealed = node.dataset.sealed;
         if (node.dataset.chars !== undefined) group.dataset.chars = node.dataset.chars;
         layout.split(',').forEach((width, index) => {
           const part = document.createElement('div');
           part.className = 'sealed-block sealed-part';
-          part.dataset.sealed = node.dataset.sealed;
+          // Keep one ciphertext per group, not one huge copy per paragraph.
+          part.dataset.sealed = '';
           part.dataset.part = String(index);
           part.style.setProperty('--sealed-width', width + 'em');
           group.append(part);
@@ -457,7 +595,7 @@
       reading.hidden = true;
       reading.inert = true;
       reading.setAttribute('aria-hidden', 'true');
-      const state = {button, reading, hover: false, focus: false, pinned: false, revealed: false, ready: false, pending: false};
+      const state = {button, reading, hover: false, focus: false, pinned: false, revealed: false, ready: false, pending: null, queued: false, failed: false};
       states.set(node, state);
       node.replaceChildren(button, reading);
       node.dataset.revealed = 'false';
@@ -487,10 +625,10 @@
         state.pinned = !state.pinned;
         renderState(node, state);
       });
-      if (master) prepareReading(node, state);
     }
     prepareSummaries();
     fillMissingCounts();
+    if (master) prepareReadings();
   }
 
   opener.addEventListener('click', openDialog);
@@ -515,28 +653,32 @@
     const code = input.value;
     input.value = '';
     setStatus('正在验证…');
+    verificationLabel.textContent = '正在加载验证资料…';
+    verification.hidden = false;
     const token = ++generation;
     let raw = null;
     try {
       const currentManifest = await loadManifest(true);
       if (generation !== token) return;
+      verificationLabel.textContent = '正在验证访问码…';
       raw = await unwrapCode(currentManifest, code);
       const nextKey = await importMaster(raw);
       raw.fill(0);
       if (generation !== token) return;
       master = nextKey;
+      decodedBlocks = new WeakMap();
       updateAccessUi();
-      await prepareReadings();
-      if (generation !== token) return;
       setStatus('通过');
       dialog.close();
       opener.focus();
+      prepareReadings();
     } catch {
       if (generation === token) setStatus(manifest ? '访问码不正确、已失效，或验证资料暂时无法加载。请确认后重试。' : '验证资料暂时无法加载，请稍后重试。', true);
     } finally {
       raw?.fill(0);
       if (generation === token) {
         busy = false;
+        verification.hidden = true;
         input.disabled = false;
         input.removeAttribute('aria-busy');
         if (dialog.open) input.focus();
@@ -546,7 +688,17 @@
 
   prepareBlocks();
   updateAccessUi();
-  if (article) new MutationObserver(prepareBlocks).observe(article, {childList: true, subtree: true});
+  if (article) {
+    let prepareTimer = null;
+    new MutationObserver(records => {
+      // Painting a reading or MathJax subtree adds no new encrypted blocks.
+      // Avoid rescanning the whole article after every paragraph mutation.
+      const relevant = node => node.nodeType === 1 && (node.matches('.sealed-block,.sealed-group,.sealed-run') || node.querySelector('.sealed-block'));
+      if (!records.some(record => [...record.addedNodes, ...record.removedNodes].some(relevant))) return;
+      clearTimeout(prepareTimer);
+      prepareTimer = setTimeout(prepareBlocks, 0);
+    }).observe(article, {childList: true, subtree: true});
+  }
   // Refresh, navigation, and history restoration all require a new code entry.
   // Invalidate pending verification too, so a late response cannot unlock it.
   window.addEventListener('pagehide', () => lock(false));
