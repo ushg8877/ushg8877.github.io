@@ -64,8 +64,8 @@
     }
     function render(){
       status.textContent='';status.classList.remove('poll-error');
-      const heading=element('h3',poll.definition.title),note=element('p','每个 GitHub 账号只能提交一次。所有问题一起提交，提交后显示结果，不能修改。','poll-note');
-      root.replaceChildren(heading,note);
+      const heading=element('h3',poll.definition.title);
+      root.replaceChildren(heading);
       if(poll.submitted){root.append(element('p','已提交 · '+(poll.user?.login||login),'poll-submitted'),status);return;}
       const form=element('form');
       for(const [index,q] of poll.definition.questions.entries()){
@@ -75,14 +75,14 @@
       }
       const actions=element('div','','poll-actions'),submit=element('button','提交投票');submit.type='submit';
       const signIn=button(poll.user?'更换 GitHub 账号':'使用 GitHub 登录',async()=>{try{status.textContent='请在新窗口完成 GitHub 登录…';await auth();}catch(error){message(error);}});
-      if(poll.closed){actions.append(element('p','投票已结束。已投票的账号登录后仍可查看结果。'));submit.disabled=true;}
+      if(poll.closed){actions.append(element('p','投票已结束'));submit.disabled=true;}
       if(poll.user)actions.append(element('span','GitHub · '+poll.user.login),submit);
       actions.append(signIn);form.append(actions,status);root.append(form);
       form.addEventListener('submit',async event=>{
         event.preventDefault();if(busy||poll.closed)return;
         const answers={};
         for(const q of poll.definition.questions){answers[q.id]=[...form.elements].filter(x=>x.name===q.id&&x.checked).map(x=>x.value);if(!answers[q.id].length){message(Error('请回答所有问题后再提交。'));return;}}
-        if(!confirm('提交后不能修改。确认提交所有答案？'))return;
+        if(!confirm('提交投票？'))return;
         busy=true;submit.disabled=true;signIn.disabled=true;status.textContent='正在提交…';const epoch=generation;
         try{
           await api('/vote','POST',{version:poll.version,answers});
@@ -102,8 +102,7 @@
         root.querySelector('.poll-results')?.remove();
         const body=element('div','','poll-results');
         for(const [index,q] of poll.definition.questions.entries()){
-          body.append(element('h4',(index+1)+'. '+q.title));
-          if(q.multiple)body.append(element('p','多选题，百分比按参与人数计算。','poll-note'));
+          body.append(element('h4',(index+1)+'. '+q.title+(q.multiple?'（多选）':'')));
           for(const option of q.options){
             const count=value.counts.find(x=>x.question===q.id&&x.option===option.id)?.votes||0,percentage=value.total?Math.round(1000*count/value.total)/10:0;
             const item=element('div','','poll-result'),row=element('div','','poll-result-label');row.append(element('span',option.label),element('span',count+' 票 · '+percentage+'%'));
