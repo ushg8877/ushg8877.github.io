@@ -6,6 +6,7 @@
   <meta name="description" content="{{ page.description | default: site.description | escape }}">
   {% if page.private_gateway %}<meta name="referrer" content="no-referrer"><meta name="robots" content="noindex, nofollow">{% endif %}
   <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="{{ '/assets/polls.css' | relative_url }}?v=20261028-voting-1">
   <link rel="canonical" href="{{ page.url | absolute_url }}">
   <meta name="giscus:backlink" content="{{ page.url | absolute_url }}">
   <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title }}</title>
@@ -67,7 +68,8 @@
   <script src="{{ '/assets/page-views.js' | relative_url }}?v=20261018-1" defer></script>
   {% endunless %}
   <script src="{{ '/assets/sealed-content.js' | relative_url }}?v=20261027-progress-1" defer></script>
-  {% unless page.access_id %}<script src="{{ "/assets/private-reader.js" | relative_url }}?v=20261028-private-1" defer></script>{% endunless %}
+  {% unless page.access_id %}<script src="{{ "/assets/private-reader.js" | relative_url }}?v=20261028-voting-1" defer></script>{% endunless %}
+  <script src="{{ '/assets/polls.js' | relative_url }}?v=20261028-voting-1" defer></script>
 </body>
 </html>
 

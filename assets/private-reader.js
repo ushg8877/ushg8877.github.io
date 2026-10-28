@@ -62,6 +62,7 @@
   }
   function lock() {
     generation++;controller?.abort();controller=null;clearTimeout(autoSubmit);
+    document.dispatchEvent(new Event('kamome-private-lock'));
     clearArticle();busy=false;input.value='';input.disabled=false;verifying.hidden=true;
     opener.dataset.verified='false';opener.querySelector('span').textContent='验证访问码';
     statusText('');if(dialog.open)dialog.close();
@@ -82,13 +83,17 @@
   function fragment(html) {
     const template=document.createElement('template');template.innerHTML=html;
     const allowed=new Set(['P','BR','HR','STRONG','EM','DEL','S','B','I','U','CODE','PRE','BLOCKQUOTE','UL','OL','LI','H1','H2','H3','H4','H5','H6','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','SUP','SUB','A','SPAN','DIV','SECTION','IMG']);
-    const classes=new Set(['math-inline','math-display','local-secret','local-secret-inline','local-secret-body']);
+    const classes=new Set(['math-inline','math-display','local-secret','local-secret-inline','local-secret-body','blog-poll']);
     function copy(source,target) {
       for(const child of source.childNodes) {
         if(child.nodeType===3){target.append(document.createTextNode(child.textContent));continue;}
         if(child.nodeType!==1||!allowed.has(child.tagName))continue;
         const clean=document.createElement(child.tagName.toLowerCase());
         for(const name of child.classList)if(classes.has(name))clean.classList.add(name);
+        if(clean.classList.contains('blog-poll')&&/^[a-f0-9]{32}$/.test(child.getAttribute('data-poll-id')||'')){
+          clean.dataset.pollId=child.getAttribute('data-poll-id');
+          if(/^[a-f0-9]{64}$/.test(child.getAttribute('data-poll-key')||''))clean.dataset.pollKey=child.getAttribute('data-poll-key');
+        }
         if(clean.classList.contains('local-secret')){clean.tabIndex=0;clean.setAttribute('aria-label','黑幕');}
         if(child.hasAttribute('data-tex')&&(clean.classList.contains('math-inline')||clean.classList.contains('math-display')))clean.dataset.tex=child.getAttribute('data-tex');
         if(child.tagName==='IMG') {
