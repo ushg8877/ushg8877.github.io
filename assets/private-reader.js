@@ -162,18 +162,17 @@
     header.append(languageButtons);article.append(header);
     articleBody=document.createElement('div');articleBody.id='article-body';articleBody.className='prose';article.append(articleBody);
     main.replaceChildren(article);
-    // Only the decrypted URL enters history. The code never enters any URL or storage.
-    history.replaceState(null,'',value.path);
     const policy=document.querySelector('meta[name="referrer"]')||document.createElement('meta');policy.name='referrer';policy.content='no-referrer';document.head.append(policy);
     showLanguage('zh');opener.dataset.verified='true';opener.querySelector('span').textContent='通过';main.focus();
   }
   form.addEventListener('submit',async event=>{
     event.preventDefault();clearTimeout(autoSubmit);if(busy)return;
-    const token=++generation;busy=true;input.disabled=true;verifying.hidden=false;
+    const token=++generation,path=location.pathname;busy=true;input.disabled=true;verifying.hidden=false;
     statusText('正在验证并解密…');let code=input.value;input.value='';
     const abort=new AbortController();controller=abort;const timer=setTimeout(()=>abort.abort(),10000);
     try {
       code=normalizeCode(code);
+      if(!/^\/posts\/[a-f0-9]{48}\/$/.test(path))throw Error('Unavailable');
       const id=await locator(code);if(token!==generation)return;
       const url=new URL('assets/private-posts/'+id+'.json',base);
       const response=await fetch(url,{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:abort.signal});
@@ -182,6 +181,9 @@
       const raw=await response.text();if(raw.length>maxBytes*2)throw Error('Too large');
       const value=await decrypt(JSON.parse(raw),code);code='';
       if(token!==generation)return;
+      // Check the authenticated path before any plaintext reaches the page.
+      // A code must never discover or redirect to an article from another URL.
+      if(value.path!==path||location.pathname!==path)throw Error('Unavailable');
       dialog.close();showArticle(value);statusText('');
     }catch {
       if(token===generation)statusText(errorText,true);
