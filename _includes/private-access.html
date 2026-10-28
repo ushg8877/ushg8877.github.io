@@ -1,0 +1,6 @@
+<dialog id="private-access-dialog" class="access-dialog" aria-label="验证访问码" data-base="{{ '/' | relative_url }}">
+  <form novalidate><input type="password" aria-label="访问码" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go" maxlength="80" required aria-describedby="private-access-status"></form>
+  <span id="private-access-status" class="access-visually-hidden" role="status" aria-live="polite"></span>
+  <div class="sealed-verifying" hidden><span>正在验证并解密…</span><progress aria-label="解密进度"></progress></div>
+</dialog>
+<template id="private-not-found"><section class="not-found"><span class="error-number" aria-hidden="true">404</span><h1>这页不在这里。</h1><p>链接可能已经更改。</p><a class="text-link" href="{{ '/' | relative_url }}">← 返回首页</a></section></template>
