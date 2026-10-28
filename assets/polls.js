@@ -5,11 +5,11 @@
   let token='',login='',pending=null,generation=0;
   const mounted=new WeakSet(),cards=new Set();
   const element=(tag,text,cls)=>{const node=document.createElement(tag);if(text)node.textContent=text;if(cls)node.className=cls;return node;};
-  function button(text,action){const node=element('button',text);node.type='button';node.addEventListener('click',action);return node;}
+  function button(text,action,kind='quiet'){const node=element('button',text,'poll-button poll-button--'+kind);node.type='button';node.addEventListener('click',action);return node;}
   function reset(){
     generation++;token='';login='';
     if(pending){pending.popup?.close();pending.reject(Error('登录已取消。'));pending=null;}
-    for(const card of cards)card.abort?.abort();cards.clear();
+    for(const card of cards){card.abort?.abort();card.clearSelection();}cards.clear();
   }
   async function auth(){
     if(pending)throw Error('请先完成已打开的 GitHub 登录。');
@@ -38,15 +38,16 @@
     if(mounted.has(root))return;mounted.add(root);
     const id=root.dataset.pollId,key=root.dataset.pollKey||'';
     if(!/^[a-f0-9]{32}$/.test(id)||key&&!/^[a-f0-9]{64}$/.test(key))return;
-    const card={root,abort:null,reload};cards.add(card);
-    let poll=null,busy=false,sequence=0;
+    const selections=new Map();
+    const card={root,abort:null,reload,clearSelection(){selections.clear();root.querySelectorAll('input').forEach(input=>{input.checked=false;});}};cards.add(card);
+    let poll=null,busy=false,sequence=0,choiceVersion='';
     const status=element('p','','poll-status');status.setAttribute('role','status');
     async function api(suffix='',method='GET',body){
       const headers={};if(token)headers.Authorization='Bearer '+token;if(key)headers['X-Poll-Key']=key;
       if(body)headers['Content-Type']='application/json';
-      card.abort=new AbortController();const timer=setTimeout(()=>card.abort.abort(),20000);
+      const controller=new AbortController();card.abort=controller;const timer=setTimeout(()=>controller.abort(),20000);
       try{
-        const response=await fetch(service+'/api/polls/'+id+suffix,{method,headers,body:body?JSON.stringify(body):undefined,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:card.abort.signal});
+        const response=await fetch(service+'/api/polls/'+id+suffix,{method,headers,body:body?JSON.stringify(body):undefined,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
         let result;try{result=await response.json();}catch{throw Error('投票服务暂时不可用，请稍后重试。');}
         if(!response.ok){const error=Error(result.error||'暂时无法完成操作。');error.status=response.status;throw error;}
         return result;
@@ -55,62 +56,92 @@
     function message(error){status.textContent=error.name==='AbortError'?'请求超时，请重试。':error.message;status.classList.add('poll-error');if(!status.isConnected)root.append(status);}
     async function reload(){
       if(busy)return;
-      const current=++sequence,epoch=generation;busy=true;
+      const current=++sequence,epoch=generation;busy=true;root.setAttribute('aria-busy','true');
       try{
         const value=await api();if(!root.isConnected||current!==sequence||epoch!==generation)return;
+        if(choiceVersion&&choiceVersion!==value.version)selections.clear();choiceVersion=value.version;
         poll=value;render();if(poll.submitted)await results(epoch,current);
       }catch(error){if(root.isConnected&&epoch===generation){root.replaceChildren(status,button('重试',reload));message(error);}}
-      finally{busy=false;}
+      finally{busy=false;root.setAttribute('aria-busy','false');}
+    }
+    function questionHeading(tag,q,index){
+      const heading=element(tag,'','poll-question-heading'),number=element('span',String(index+1).padStart(2,'0'),'poll-number');number.setAttribute('aria-hidden','true');
+      heading.append(number,element('span',q.title,'poll-question-title'),element('span',q.multiple?'多选':'单选','poll-kind'));return heading;
     }
     function render(){
       status.textContent='';status.classList.remove('poll-error');
-      const heading=element('h3',poll.definition.title);
-      root.replaceChildren(heading);
-      if(poll.submitted){root.append(element('p','已提交 · '+(poll.user?.login||login),'poll-submitted'),status);return;}
-      const form=element('form');
+      const header=element('header','','poll-header');header.append(element('h3',poll.definition.title,'poll-title'));
+      if(poll.submitted||poll.closed)header.append(element('span',poll.submitted?'已投票':'已结束','poll-badge '+(poll.submitted?'is-submitted':'is-closed')));
+      root.replaceChildren(header);
+      if(poll.submitted){
+        selections.clear();const summary=element('div','','poll-summary');
+        summary.append(element('span','GitHub · '+(poll.user?.login||login),'poll-account'),element('span','','poll-total'));
+        status.textContent='加载结果…';root.append(summary,status);return;
+      }
+      const form=element('form','','poll-form');
       for(const [index,q] of poll.definition.questions.entries()){
-        const field=element('fieldset');field.append(element('legend',(index+1)+'. '+q.title+'（'+(q.multiple?'多选':'单选')+'）'));
-        for(const option of q.options){const label=element('label','','poll-option'),input=document.createElement('input');input.type=q.multiple?'checkbox':'radio';input.name=q.id;input.value=option.id;input.disabled=!!poll.closed;label.append(input,element('span',option.label));field.append(label);}
+        const field=element('fieldset','','poll-question');field.append(questionHeading('legend',q,index));
+        const options=element('div','','poll-options');
+        for(const option of q.options){
+          const label=element('label','','poll-option'),input=document.createElement('input');
+          input.type=q.multiple?'checkbox':'radio';input.name=q.id;input.value=option.id;input.disabled=!!poll.closed;input.checked=(selections.get(q.id)||[]).includes(option.id);
+          label.append(input,element('span',option.label,'poll-option-text'));options.append(label);
+        }
+        field.append(options);
+        field.addEventListener('change',()=>{selections.set(q.id,[...field.querySelectorAll('input:checked')].map(input=>input.value));field.classList.remove('is-unanswered');field.querySelectorAll('[aria-invalid]').forEach(input=>input.removeAttribute('aria-invalid'));status.textContent='';});
         form.append(field);
       }
-      const actions=element('div','','poll-actions'),submit=element('button','提交投票');submit.type='submit';
-      const signIn=button(poll.user?'更换 GitHub 账号':'使用 GitHub 登录',async()=>{try{status.textContent='请在新窗口完成 GitHub 登录…';await auth();}catch(error){message(error);}});
-      if(poll.closed){actions.append(element('p','投票已结束'));submit.disabled=true;}
-      if(poll.user)actions.append(element('span','GitHub · '+poll.user.login),submit);
+      const actions=element('div','','poll-actions'),submit=element('button','提交投票','poll-button poll-button--primary');submit.type='submit';
+      const signIn=button(poll.user?'切换账号':'GitHub 登录',async()=>{
+        signIn.disabled=true;status.classList.remove('poll-error');
+        try{status.textContent='等待 GitHub 登录…';await auth();}catch(error){message(error);}finally{if(signIn.isConnected)signIn.disabled=false;}
+      },poll.user?'quiet':'primary');
+      if(poll.user){actions.append(element('span','GitHub · '+poll.user.login,'poll-account'));if(!poll.closed)actions.append(submit);}
       actions.append(signIn);form.append(actions,status);root.append(form);
       form.addEventListener('submit',async event=>{
         event.preventDefault();if(busy||poll.closed)return;
+        if(!poll.user){signIn.click();return;}
         const answers={};
-        for(const q of poll.definition.questions){answers[q.id]=[...form.elements].filter(x=>x.name===q.id&&x.checked).map(x=>x.value);if(!answers[q.id].length){message(Error('请回答所有问题后再提交。'));return;}}
+        for(const q of poll.definition.questions){
+          answers[q.id]=[...form.elements].filter(x=>x.name===q.id&&x.checked).map(x=>x.value);
+          if(!answers[q.id].length){
+            const input=[...form.elements].find(x=>x.name===q.id);input?.closest('fieldset').classList.add('is-unanswered');input?.setAttribute('aria-invalid','true');input?.focus();
+            message(Error('还有问题未作答。'));return;
+          }
+        }
         if(!confirm('提交投票？'))return;
-        busy=true;submit.disabled=true;signIn.disabled=true;status.textContent='正在提交…';const epoch=generation;
+        busy=true;root.setAttribute('aria-busy','true');form.querySelectorAll('input,button').forEach(input=>{input.disabled=true;});status.textContent='正在提交…';const epoch=generation;
         try{
           await api('/vote','POST',{version:poll.version,answers});
           if(epoch!==generation||!root.isConnected)return;
           poll.submitted=true;render();await results(epoch,sequence);
         }catch(error){
           if(epoch===generation&&root.isConnected){
-            if(error.status===409){busy=false;await reload();}else{message(error);submit.disabled=false;signIn.disabled=false;}
+            if(error.status===409){busy=false;await reload();}else{message(error);form.querySelectorAll('input,button').forEach(input=>{input.disabled=false;});}
           }
-        }finally{busy=false;}
+        }finally{busy=false;root.setAttribute('aria-busy','false');}
       });
     }
     async function results(epoch,current){
       try{
         const value=await api('/results');if(epoch!==generation||current!==sequence||!root.isConnected)return;
-        status.textContent='共 '+value.total+' 人参与。';status.classList.remove('poll-error');
+        status.textContent='';status.classList.remove('poll-error');root.querySelector('.poll-total').textContent=value.total+' 人投票';
+        const restoreFocus=root.querySelector('.poll-results')?.contains(document.activeElement)||root.querySelector('.poll-result-retry')===document.activeElement;
+        root.querySelector('.poll-result-retry')?.remove();
         root.querySelector('.poll-results')?.remove();
         const body=element('div','','poll-results');
         for(const [index,q] of poll.definition.questions.entries()){
-          body.append(element('h4',(index+1)+'. '+q.title+(q.multiple?'（多选）':'')));
+          const group=element('section','','poll-result-question');group.append(questionHeading('h4',q,index));
+          const highest=Math.max(0,...q.options.map(option=>value.counts.find(x=>x.question===q.id&&x.option===option.id)?.votes||0));
           for(const option of q.options){
             const count=value.counts.find(x=>x.question===q.id&&x.option===option.id)?.votes||0,percentage=value.total?Math.round(1000*count/value.total)/10:0;
-            const item=element('div','','poll-result'),row=element('div','','poll-result-label');row.append(element('span',option.label),element('span',count+' 票 · '+percentage+'%'));
-            const meter=element('progress');meter.max=value.total||1;meter.value=count;meter.setAttribute('aria-label',option.label+'：'+count+' 票');item.append(row,meter);body.append(item);
+            const item=element('div','','poll-result'+(highest>0&&count===highest?' is-leading':'')),row=element('div','','poll-result-label');row.append(element('span',option.label,'poll-option-text'),element('span',count+' 票 · '+percentage+'%','poll-result-count'));
+            const meter=element('progress');meter.max=value.total||1;meter.value=count;meter.setAttribute('aria-label',option.label+'：'+count+' 票');item.append(row,meter);group.append(item);
           }
+          body.append(group);
         }
-        body.append(button('刷新结果',()=>results(generation,sequence)));root.append(body);
-      }catch(error){if(root.isConnected&&epoch===generation){message(error);root.querySelector('.poll-result-retry')?.remove();const retry=button('重新加载结果',()=>results(generation,sequence));retry.className='poll-result-retry';root.append(retry);}}
+        const actions=element('div','','poll-result-actions'),refresh=button('刷新结果',async()=>{refresh.disabled=true;await results(generation,sequence);if(refresh.isConnected)refresh.disabled=false;});actions.append(refresh);body.append(actions);root.append(body);if(restoreFocus)refresh.focus({preventScroll:true});
+      }catch(error){if(root.isConnected&&epoch===generation){message(error);root.querySelector('.poll-result-retry')?.remove();const retry=button('重新加载结果',()=>results(generation,sequence));retry.classList.add('poll-result-retry');root.append(retry);}}
     }
     reload();
   }
