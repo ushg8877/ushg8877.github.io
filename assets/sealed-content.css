@@ -39,6 +39,8 @@
 .sealed-block .sealed-reading>:first-child{margin-top:0}
 .sealed-block .sealed-reading>:last-child{margin-bottom:0}
 .sealed-block .sealed-reading a{overflow-wrap:anywhere}
+.sealed-block .sealed-reading img{display:block;max-width:100%;height:auto;margin:0}
+.sealed-inline[data-ready="true"]:has(img){display:inline-block;max-width:100%;vertical-align:middle}
 .sealed-inline{display:inline-block;width:3.5em;min-height:1.15em;margin:0 .08em;vertical-align:-.14em;line-height:inherit}
 .sealed-inline[data-ready="true"]{display:inline;width:auto;max-width:none;vertical-align:baseline;margin:0;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .sealed-inline .sealed-reading{display:inline}

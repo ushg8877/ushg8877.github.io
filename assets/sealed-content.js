@@ -3,12 +3,14 @@
   'use strict';
   const utf8 = new TextEncoder();
   const decoder = new TextDecoder('utf-8', {fatal: true});
+  const maxBlockBytes = 16 * 1024 * 1024;
   const epochPattern = /^[a-f0-9]{32}$/;
   const idPattern = /^[a-f0-9]{64}$/;
   const hasFields = (value, fields) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === fields.length && fields.every(field => Object.hasOwn(value, field));
 
   function unbase64(value, expectedLength) {
-    if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value) || value.length > 8_000_000) throw Error('Invalid encoding');
+    if (expectedLength !== undefined && value?.length !== Math.ceil(expectedLength * 4 / 3)) throw Error('Invalid byte length');
+    if (typeof value !== 'string' || value.length > (maxBlockBytes + 65536) * 2 || !/^[A-Za-z0-9_-]+$/.test(value)) throw Error('Invalid encoding');
     const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4));
     const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
     if (expectedLength !== undefined && bytes.length !== expectedLength) throw Error('Invalid byte length');
@@ -52,10 +54,10 @@
     const envelope = JSON.parse(decoder.decode(unbase64(encoded)));
     if (!hasFields(envelope, ['v', 'epoch', 'iv', 'ciphertext']) || envelope.v !== 1 || envelope.epoch !== epoch || !epochPattern.test(epoch)) throw Error('Outdated encrypted content');
     const cipher = unbase64(envelope.ciphertext);
-    if (cipher.length < 16 || cipher.length > 4 * 1024 * 1024 + 16) throw Error('Invalid content length');
+    if (cipher.length < 16 || cipher.length > maxBlockBytes + 16) throw Error('Invalid content length');
     const plain = await subtle.decrypt({name: 'AES-GCM', iv: unbase64(envelope.iv, 12), additionalData: utf8.encode('kamome-access-content:v1:' + epoch), tagLength: 128}, key, cipher);
     const content = JSON.parse(decoder.decode(plain));
-    if (!hasFields(content, ['markdown', 'html']) || typeof content.markdown !== 'string' || typeof content.html !== 'string' || content.html.length > 4 * 1024 * 1024) throw Error('Invalid content');
+    if (!hasFields(content, ['markdown', 'html']) || typeof content.markdown !== 'string' || typeof content.html !== 'string' || content.html.length > maxBlockBytes) throw Error('Invalid content');
     return content.html;
   }
 
@@ -296,12 +298,12 @@
   }
 
   // Parse into an inert template, then copy only supported markup into new nodes.
-  // No source attributes, resource elements, inline styles, or event handlers survive.
+  // Images accept bounded inline PNG only, never URLs, srcset or event handlers.
   function safeFragment(html) {
     const template = document.createElement('template');
     template.innerHTML = html;
-    const allowed = new Set(['P', 'BR', 'HR', 'STRONG', 'EM', 'DEL', 'S', 'B', 'I', 'U', 'CODE', 'PRE', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'SUP', 'SUB', 'A', 'SPAN', 'DIV', 'DL', 'DT', 'DD']);
-    const discard = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META', 'BASE', 'IMG', 'PICTURE', 'SOURCE', 'VIDEO', 'AUDIO', 'TRACK', 'SVG', 'MATH', 'FORM', 'INPUT', 'BUTTON', 'TEXTAREA', 'SELECT', 'TEMPLATE']);
+    const allowed = new Set(['P', 'BR', 'HR', 'STRONG', 'EM', 'DEL', 'S', 'B', 'I', 'U', 'CODE', 'PRE', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'SUP', 'SUB', 'A', 'SPAN', 'DIV', 'DL', 'DT', 'DD', 'IMG']);
+    const discard = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META', 'BASE', 'PICTURE', 'SOURCE', 'VIDEO', 'AUDIO', 'TRACK', 'SVG', 'MATH', 'FORM', 'INPUT', 'BUTTON', 'TEXTAREA', 'SELECT', 'TEMPLATE']);
     function copy(source, parent) {
       for (const child of source.childNodes) {
         if (child.nodeType === 3) { parent.append(document.createTextNode(child.textContent)); continue; }
@@ -309,6 +311,19 @@
         if (!allowed.has(child.tagName)) { copy(child, parent); continue; }
         const tag = /^H[1-6]$/.test(child.tagName) ? 'h3' : child.tagName.toLowerCase();
         const clean = document.createElement(tag);
+        if (tag === 'img') {
+          const src = child.getAttribute('src') || '';
+          if (src.length > 11200000 || !/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(src)) continue;
+          const encoded = src.slice(22);
+          let raw;
+          try { raw = atob(encoded); } catch { continue; }
+          if (raw.length < 33 || raw.length > 8 * 1024 * 1024 || btoa(raw) !== encoded || raw.slice(0,16) !== '\x89PNG\r\n\x1a\n\0\0\0\rIHDR') continue;
+          const size = offset => (raw.charCodeAt(offset)*16777216 + raw.charCodeAt(offset+1)*65536 + raw.charCodeAt(offset+2)*256 + raw.charCodeAt(offset+3));
+          const width = size(16), height = size(20);
+          if (!width || !height || width > 8192 || height > 8192 || width * height > 16000000) continue;
+          clean.width=width;clean.height=height;clean.alt=child.getAttribute('alt')||'';
+          clean.referrerPolicy='no-referrer';clean.src=src;
+        }
         if (tag === 'a') {
           const href = child.getAttribute('href') || '';
           // External navigation only; no resource fetch is made by rendering a link.
@@ -399,7 +414,7 @@
       // The mask is an inline decoration around each paragraph's text. Its
       // last visual line ends where the text ends, without changing text flow.
       const paragraphs = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
-      if (!node.classList.contains('sealed-inline') && paragraphs.length && paragraphs.every(child => child.nodeName === 'P')) {
+      if (!node.classList.contains('sealed-inline') && paragraphs.length && paragraphs.every(child => child.nodeName === 'P' && !child.querySelector('img'))) {
         for (const paragraph of paragraphs) {
           const mask = document.createElement('span');
           mask.className = 'sealed-line-mask';
