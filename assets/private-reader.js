@@ -34,8 +34,18 @@
     }
     return payload;
   }
+  function displayTime(value) {
+    if (!value) return '';
+    let text=String(value).trim().replace(/^(\d{4}-\d{2}-\d{2})\s+/,'$1T').replace(/\s+([+-]\d{2}:?\d{2})$/,'$1');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) text+='T00:00:00';
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(text)) text+='+08:00';
+    const date=new Date(text);
+    if (!Number.isFinite(date.getTime())) return '';
+    const fields=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(date).map(part=>[part.type,part.value]));
+    return `${fields.year}.${fields.month}.${fields.day} ${fields.hour}:${fields.minute}:${fields.second}`;
+  }
   if (typeof document === 'undefined') {
-    if (typeof module !== 'undefined') module.exports = {normalizeCode,locator,decrypt};
+    if (typeof module !== 'undefined') module.exports = {normalizeCode,locator,decrypt,displayTime};
     return;
   }
   const dialog = document.querySelector('#private-access-dialog');
@@ -152,7 +162,10 @@
     const article=document.createElement('article');article.className='reading';
     const back=document.createElement('a');back.className='back';back.href=base.href;back.textContent='← 所有文章';back.rel='noreferrer';article.append(back);
     const header=document.createElement('header');header.className='post-header';
-    const date=document.createElement('div');date.className='post-meta';date.textContent=String(value.date||'');header.append(date);
+    const date=document.createElement('div');date.className='post-meta';
+    const first=document.createElement('time');first.textContent=displayTime(value.first_published_at||value.date);date.append(first);
+    if (value.updated_at) {const updated=document.createElement('time');updated.textContent='更新于 '+displayTime(value.updated_at);date.append(updated);}
+    header.append(date);
     titleNode=document.createElement('h1');titleNode.id='article-title';header.append(titleNode);
     languageButtons=document.createElement('div');languageButtons.className='article-languages';languageButtons.hidden=Object.keys(value.languages).length<2;
     for(const [code,label] of [['zh','中文'],['ja','日本語'],['en','English']]) {

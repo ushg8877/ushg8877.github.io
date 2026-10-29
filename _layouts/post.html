@@ -3,7 +3,8 @@ layout: default
 ---
 <article class="reading">
   <a class="back" href="{{ '/' | relative_url }}">← 所有文章</a>
-  <header class="post-header"><div class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%Y.%m.%d' }}</time>{% if page.updated_at %}<time datetime="{{ page.updated_at | date_to_xmlschema }}">更新于 {{ page.updated_at | date: '%Y.%m.%d' }}</time>{% endif %}<div class="post-tags">{% for tag in page.tags %}<a href="{{ '/' | relative_url }}?tag={{ tag | uri_escape }}#articles">{{ tag | escape }}</a>{% endfor %}</div></div><h1 id="article-title" lang="zh-CN">{{ page.title | escape }}</h1>
+  {% assign first_published = page.first_published_at | default: site.data.publication_history[page.path] | default: page.date %}
+  <header class="post-header"><div class="post-meta"><time datetime="{{ first_published | date_to_xmlschema }}">{{ first_published | date: '%Y.%m.%d %H:%M:%S' }}</time>{% if page.updated_at %}<time datetime="{{ page.updated_at | date_to_xmlschema }}">更新于 {{ page.updated_at | date: '%Y.%m.%d %H:%M:%S' }}</time>{% endif %}<div class="post-tags">{% for tag in page.tags %}<a href="{{ '/' | relative_url }}?tag={{ tag | uri_escape }}#articles">{{ tag | escape }}</a>{% endfor %}</div></div><h1 id="article-title" lang="zh-CN">{{ page.title | escape }}</h1>
   {% assign ja_body = page.translations.ja.body | default: '' | strip %}
   {% assign en_body = page.translations.en.body | default: '' | strip %}
   {% if ja_body != '' or en_body != '' %}

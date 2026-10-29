@@ -1,7 +1,8 @@
 {%- assign post = include.post -%}
+{%- assign first_published = post.first_published_at | default: site.data.publication_history[post.path] | default: post.date -%}
 {%- assign updated = post.updated_at | default: post.date -%}
 <article class="post-card" data-title="{{ post.title | escape }}" data-tags="{{ post.tags | join: '|' | escape }}" data-priority="{{ post.priority | default: 0 }}" data-updated="{{ updated | date_to_xmlschema }}">
-  <time class="post-date" datetime="{{ updated | date_to_xmlschema }}" title="更新于 {{ updated | date: '%Y.%m.%d %H:%M' }}"><span>{{ updated | date: '%m.%d' }}</span><span>{{ updated | date: '%Y' }}</span></time>
+  <time class="post-date" datetime="{{ updated | date_to_xmlschema }}" title="首次发布 {{ first_published | date: '%Y.%m.%d %H:%M:%S' }} · 更新于 {{ updated | date: '%Y.%m.%d %H:%M:%S' }}"><span>{{ updated | date: '%m.%d' }}</span><span>{{ updated | date: '%Y' }}</span></time>
   <div class="post-info"><div class="post-tags">{% for tag in post.tags %}<span>{{ tag | escape }}</span>{% endfor %}</div><h3><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></h3></div>
   <span class="post-arrow" aria-hidden="true">↗</span>
 </article>
