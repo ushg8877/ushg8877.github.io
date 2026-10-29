@@ -7,7 +7,7 @@
   data-category-id="{{ site.giscus.category_id | escape }}"
   data-theme-light="{{ '/assets/giscus-theme-light.css' | absolute_url }}"
   data-theme-dark="{{ '/assets/giscus-theme-dark.css' | absolute_url }}"
-  data-term="{{ page.url | relative_url | escape }}">
+  data-term="{{ page.comment_path | default: page.url | relative_url | escape }}">
   <h2 id="article-comments-heading">评论</h2>
   <p class="engagement-intro">登录 GitHub 后，可以点赞或留言。</p>
   <p class="engagement-status" role="status" aria-live="polite" hidden></p>
