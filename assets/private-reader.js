@@ -144,7 +144,7 @@
       for(let index=0;index<nodes.length;index++) {
         if(token!==generation||!body.isConnected||!payload)return;
         const node=nodes[index];
-        math.render(node.dataset.tex,node,{displayMode:node.classList.contains('math-display'),throwOnError:false,trust:false,strict:'error',maxExpand:1000,maxSize:20});
+        math.render(node.dataset.tex,node,{displayMode:node.classList.contains('math-display'),throwOnError:false,macros:{'\\d':'\\mathrm{d}'},trust:false,strict:'error',maxExpand:1000,maxSize:20});
         if(index%16===15)await new Promise(resolve=>setTimeout(resolve,0));
       }
     }catch { /* The original TeX remains readable if local resources fail. */ }
