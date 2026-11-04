@@ -1,8 +1,8 @@
 {
   "languages": {
     "zh": {
-      "html": "",
-      "source": ""
+      "html": "<p>这是一个测试，题目来源：北京大学谜协 2026 秋季招新。</p>\n<p><span class=\"sealed-block sealed-inline\" data-sealed=\"eyJjaXBoZXJ0ZXh0IjoiX0dfcWtMbUVaSGhJUDRncks3ZmpLZ1d1S1FFVExJT3N2bnVMTVA5ckd3bVoweVdXeWdlVm9VQUxELVdYOFBQbjdjcndGWlEiLCJlcG9jaCI6IjExOTM4YWRjNjYzOTY3MTBiZDcyYmFhMWVhMjVlZjU3IiwiaXYiOiJRTGVsWTBodFM1UUJkNWdfIiwidiI6MX0\"><span class=\"sealed-placeholder\" data-chars=\"6\">此处内容需验证码解锁</span></span></p>\n",
+      "source": "这是一个测试，题目来源：北京大学谜协 2026 秋季招新。\n\n<span class=\"sealed-block sealed-inline\" data-sealed=\"eyJjaXBoZXJ0ZXh0IjoiX0dfcWtMbUVaSGhJUDRncks3ZmpLZ1d1S1FFVExJT3N2bnVMTVA5ckd3bVoweVdXeWdlVm9VQUxELVdYOFBQbjdjcndGWlEiLCJlcG9jaCI6IjExOTM4YWRjNjYzOTY3MTBiZDcyYmFhMWVhMjVlZjU3IiwiaXYiOiJRTGVsWTBodFM1UUJkNWdfIiwidiI6MX0\"><span class=\"sealed-placeholder\" data-chars=\"6\">此处内容需验证码解锁</span></span>"
     }
   },
   "path": "_posts/2026-11-04-first-problem.md",
