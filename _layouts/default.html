@@ -13,7 +13,7 @@
   <link rel="icon" href="{{ '/assets/favicon.svg' | relative_url }}?v=20261015-branches-1" type="image/svg+xml">
   <link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}?v=20261019-math-1">
   <link rel="stylesheet" href="{{ '/assets/article-engagement.css' | relative_url }}?v=20261018-1">
-  <link rel="stylesheet" href="{{ '/assets/sealed-content.css' | relative_url }}?v=20261029-images-1">
+  <link rel="stylesheet" href="{{ '/assets/sealed-content.css' | relative_url }}?v=20261104-puzzles-1">
   <link rel="stylesheet" href="{{ '/assets/bird-flight.css' | relative_url }}?v=20261015-branches-1">
   <script>try{const t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
   {% unless page.access_id %}<link rel="stylesheet" href="{{ "/assets/private-reader.css" | relative_url }}?v=20261029-images-1">{% endunless %}
@@ -48,6 +48,7 @@
       <nav class="main-nav" aria-label="主导航">
         <a href="{{ '/' | relative_url }}" {% if page.url == '/' %}aria-current="page"{% endif %}><span>首页</span><span class="nav-mark" aria-hidden="true">↗</span></a>
         <a href="{{ '/archive/' | relative_url }}" {% if page.url == '/archive/' %}aria-current="page"{% endif %}><span>归档</span><span class="nav-mark" aria-hidden="true">↗</span></a>
+        <a href="{{ '/puzzle/' | relative_url }}" {% if page.url == '/puzzle/' or site.data.puzzles contains page.access_id %}aria-current="page"{% endif %}><span>Puzzle</span><span class="nav-mark" aria-hidden="true">↗</span></a>
         <a href="https://github.com/ushg8877" target="_blank" rel="noopener noreferrer"><span>GitHub</span><span class="nav-mark" aria-hidden="true">↗</span></a>
       </nav>
       {% if page.access_id %}<button id="access-open" class="access-trigger" type="button" aria-haspopup="dialog" aria-controls="access-dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><span>验证访问码</span></button>{% else %}<button id="private-access-open" class="access-trigger" type="button" aria-haspopup="dialog" aria-controls="private-access-dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><span>验证访问码</span></button>{% endif %}
@@ -67,8 +68,9 @@
   {% unless page.private_gateway %}
   <script src="{{ '/assets/page-views.js' | relative_url }}?v=20261018-1" defer></script>
   {% endunless %}
-  <script src="{{ '/assets/sealed-content.js' | relative_url }}?v=20261029-images-1" defer></script>
-  {% unless page.access_id %}<script src="{{ "/assets/private-reader.js" | relative_url }}?v=20261102-differential-d-1" defer></script>{% endunless %}
+  <script src="{{ '/assets/puzzles.js' | relative_url }}?v=20261104-puzzles-1" defer></script>
+  <script src="{{ '/assets/sealed-content.js' | relative_url }}?v=20261104-puzzles-1" defer></script>
+  {% unless page.access_id %}<script src="{{ "/assets/private-reader.js" | relative_url }}?v=20261104-puzzles-1" defer></script>{% endunless %}
   <script src="{{ '/assets/polls.js' | relative_url }}?v=20261028-poll-ui-1" defer></script>
 </body>
 </html>

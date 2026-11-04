@@ -11,6 +11,13 @@
 .access-dialog input:focus-visible{outline-color:var(--soft)}
 .access-dialog input[aria-invalid="true"]{border-color:#bd4b4b;outline-color:#bd4b4b}
 .access-dialog input[aria-busy="true"]{cursor:wait}
+.puzzle-hint{display:grid;gap:16px;margin-top:12px;padding:20px;border:1px solid var(--line);border-radius:8px;background:var(--paper);box-shadow:0 12px 50px #0002}
+.puzzle-hint[hidden]{display:none}
+.puzzle-hint p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:16px/1.8 var(--sans)}
+.puzzle-hint button{justify-self:end;padding:8px 20px;border:1px solid var(--line);border-radius:6px;background:var(--accent);color:var(--paper);font:inherit;cursor:pointer}
+.puzzle-mode .access-visually-hidden{position:static!important;display:block;width:auto!important;height:auto!important;margin:10px 0 0!important;padding:0!important;clip-path:none!important;white-space:normal!important;font:15px/1.6 var(--sans);color:var(--ink);background:var(--paper);border-radius:6px}
+.puzzle-mode input{letter-spacing:normal}
+.puzzle-mode:has(input:disabled) .puzzle-hint button{opacity:.6;pointer-events:none}
 .sealed-verifying{display:grid;gap:10px;margin-top:12px;padding:14px 18px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:16px/1.6 var(--sans)}
 .sealed-progress{position:fixed;z-index:30;right:24px;bottom:24px;display:grid;gap:10px;width:min(310px,calc(100vw - 48px));box-sizing:border-box;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);box-shadow:0 6px 24px #0002;font:16px/1.6 var(--sans)}
 .sealed-progress[hidden],.sealed-verifying[hidden]{display:none}

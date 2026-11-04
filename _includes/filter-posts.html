@@ -1,0 +1,10 @@
+{%- assign listing_posts = '' | split: ',' -%}
+{%- for candidate in site.posts -%}
+  {%- assign is_puzzle = false -%}
+  {%- if candidate.access_id and site.data.puzzles contains candidate.access_id -%}{%- assign is_puzzle = true -%}{%- endif -%}
+  {%- if include.scope == 'puzzles' -%}
+    {%- if is_puzzle -%}{%- assign listing_posts = listing_posts | push: candidate -%}{%- endif -%}
+  {%- else -%}
+    {%- unless is_puzzle -%}{%- assign listing_posts = listing_posts | push: candidate -%}{%- endunless -%}
+  {%- endif -%}
+{%- endfor -%}

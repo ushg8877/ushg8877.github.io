@@ -3,8 +3,12 @@ GitHub Pages supports Liquid, but not a custom multi-key sorting plugin.
 Use padded numeric keys so priority 10 sorts above 2 and missing metadata
 falls back to priority 0 / the publication date. The final key breaks ties.
 {%- endcomment -%}
+{%- assign listing_scope = include.scope -%}
+{%- if include.mode == 'pagination' and page.access_id and site.data.puzzles contains page.access_id -%}{%- assign listing_scope = 'puzzles' -%}{%- endif -%}
+{%- include filter-posts.html scope=listing_scope -%}
+{%- assign source_posts = listing_posts -%}
 {%- capture post_keys -%}
-  {%- for item in site.posts -%}
+  {%- for item in source_posts -%}
     {%- assign priority_key = item.priority | default: 0 | plus: 10000 | prepend: '00000' | slice: -5, 5 -%}
     {%- assign updated_key = item.updated_at | default: item.date | date: '%s' | plus: 100000000000 | prepend: '000000000000' | slice: -12, 12 -%}
     {{- priority_key -}}:{{- updated_key -}}:{{- forloop.index0 -}}/
@@ -14,7 +18,7 @@ falls back to priority 0 / the publication date. The final key breaks ties.
 {%- assign ordered_posts = '' | split: ',' -%}
 {%- for key in sorted_keys -%}
   {%- assign post_index = key | split: ':' | last | plus: 0 -%}
-  {%- assign item = site.posts[post_index] -%}
+  {%- assign item = source_posts[post_index] -%}
   {%- assign ordered_posts = ordered_posts | push: item -%}
 {%- endfor -%}
 {%- if include.mode == 'pagination' -%}

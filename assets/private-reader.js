@@ -59,6 +59,7 @@
   let generation=0, busy=false, payload=null, controller=null, autoSubmit=null, mathLoading=null;
   let languageButtons=null, articleBody=null, titleNode=null, language='zh';
   const errorText='访问码不正确，或文章暂时无法打开。';
+  const puzzleUI=window.KamomePuzzle?.attach(dialog,input,status,()=>window.KamomePuzzle.loadPrivate(location.pathname,base));
 
   function statusText(text,error=false) {
     status.textContent=text;input.setAttribute('aria-invalid',String(error));
@@ -71,6 +72,7 @@
     payload=null;articleBody=null;titleNode=null;languageButtons=null;
   }
   function lock() {
+    puzzleUI?.cancel();
     generation++;controller?.abort();controller=null;clearTimeout(autoSubmit);
     document.dispatchEvent(new Event('kamome-private-lock'));
     clearArticle();busy=false;input.value='';input.disabled=false;verifying.hidden=true;
@@ -80,14 +82,14 @@
   opener.addEventListener('click',()=>{
     if(busy)return;
     if(payload){lock();return;}
-    statusText('');dialog.showModal();input.focus();
+    statusText('');dialog.showModal();input.focus();puzzleUI?.refresh();
   });
   dialog.addEventListener('click',event=>{if(event.target===dialog)lock();});
   dialog.addEventListener('cancel',event=>{event.preventDefault();lock();});
-  dialog.addEventListener('close',()=>{input.value='';clearTimeout(autoSubmit);});
+  dialog.addEventListener('close',()=>{input.value='';clearTimeout(autoSubmit);puzzleUI?.cancel();});
   input.addEventListener('input',()=>{
     clearTimeout(autoSubmit);statusText('');
-    if(/^[A-Fa-f0-9]{32}$/.test(input.value.replace(/[\s-]/g,'')))autoSubmit=setTimeout(()=>{if(!busy&&dialog.open)form.requestSubmit();},180);
+    if(input.dataset.puzzle!=='true'&&/^[A-Fa-f0-9]{32}$/.test(input.value.replace(/[\s-]/g,'')))autoSubmit=setTimeout(()=>{if(!busy&&dialog.open)form.requestSubmit();},180);
   });
 
   function fragment(html) {
@@ -182,10 +184,16 @@
     event.preventDefault();clearTimeout(autoSubmit);if(busy)return;
     const token=++generation,path=location.pathname;busy=true;input.disabled=true;verifying.hidden=false;
     statusText('正在验证并解密…');let code=input.value;input.value='';
-    const abort=new AbortController();controller=abort;const timer=setTimeout(()=>abort.abort(),10000);
+    const abort=new AbortController();controller=abort;let timer=null,puzzle=null;
     try {
-      code=normalizeCode(code);
       if(!/^\/posts\/[a-f0-9]{48}\/$/.test(path))throw Error('Unavailable');
+      if(window.KamomePuzzle)puzzle=await window.KamomePuzzle.loadPrivate(path,base);
+      if(token!==generation||location.pathname!==path)return;
+      puzzleUI?.set(puzzle);
+      if(puzzle){statusText('正在验证谜底…');code=await window.KamomePuzzle.unlock(puzzle,code);}
+      code=normalizeCode(code);
+      if(token!==generation||location.pathname!==path)return;
+      timer=setTimeout(()=>abort.abort(),10000);
       const id=await locator(code);if(token!==generation)return;
       const url=new URL('assets/private-posts/'+id+'.json',base);
       const response=await fetch(url,{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:abort.signal});
@@ -199,7 +207,7 @@
       if(value.path!==path||location.pathname!==path)throw Error('Unavailable');
       dialog.close();showArticle(value);statusText('');
     }catch {
-      if(token===generation)statusText(errorText,true);
+      if(token===generation)statusText(puzzle?'谜底不正确，或文章暂时无法打开。':errorText,true);
     }finally {
       code='';clearTimeout(timer);
       if(token===generation){busy=false;input.disabled=false;verifying.hidden=true;controller=null;if(dialog.open)input.focus();}

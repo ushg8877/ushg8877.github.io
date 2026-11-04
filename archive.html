@@ -3,6 +3,7 @@ layout: default
 title: 文章归档
 permalink: /archive/
 ---
-<header class="page-heading"><h1>归档<span class="heading-dot">。</span></h1><p>共 {{ site.posts | size }} 篇文章</p></header>
+{% include filter-posts.html %}
+<header class="page-heading"><h1>归档<span class="heading-dot">。</span></h1><p>共 {{ listing_posts | size }} 篇文章</p></header>
 <div class="post-list">{% include ordered-posts.html %}</div>
-{% if site.posts.size == 0 %}<p class="empty">还没有文章。</p>{% endif %}
+{% if listing_posts.size == 0 %}<p class="empty">还没有文章。</p>{% endif %}

@@ -18,7 +18,11 @@
   }
 
   function validateManifest(value) {
-    if (!hasFields(value, ['version', 'epoch', 'codes']) || value.version !== 1 || !epochPattern.test(value.epoch) || !Array.isArray(value.codes) || value.codes.length > 512) throw Error('Invalid manifest');
+    if ((!hasFields(value, ['version', 'epoch', 'codes'])&&!hasFields(value, ['version', 'epoch', 'codes', 'puzzle'])) || value.version !== 1 || !epochPattern.test(value.epoch) || !Array.isArray(value.codes) || value.codes.length > 512) throw Error('Invalid manifest');
+    if(Object.hasOwn(value,'puzzle')) {
+      const puzzles=typeof document==='undefined'?require('./puzzles.js'):window.KamomePuzzle;
+      puzzles.validate(value.puzzle);
+    }
     const ids = new Set();
     for (const code of value.codes) {
       if (!hasFields(code, ['id', 'salt', 'iv', 'wrapped_key', 'rounds']) || !idPattern.test(code.id) || ids.has(code.id) || code.rounds !== 600000) throw Error('Invalid access code entry');
@@ -76,6 +80,7 @@
   if (!dialog || !opener || !form || !input || !status) return;
   const articleId = dialog.dataset.article;
   if (!epochPattern.test(articleId || '')) return;
+  const puzzleUI=window.KamomePuzzle?.attach(dialog,input,status,async()=>{const value=(await loadManifest(true)).puzzle||null;if(value)window.KamomePuzzle.validate(value,articleId);return value;});
 
   let manifest = null;
   let manifestPromise = null;
@@ -244,6 +249,7 @@
     if (!crypto?.subtle) setStatus('当前浏览器无法使用加密验证。', true);
     else setStatus('');
     if (!dialog.open) dialog.showModal();
+    puzzleUI?.refresh();
     input.focus();
   }
 
@@ -270,6 +276,7 @@
   }
 
   function lock(announce = true) {
+    puzzleUI?.cancel();
     generation++;
     master = null;
     decodedBlocks = new WeakMap();
@@ -648,12 +655,12 @@
 
   opener.addEventListener('click', openDialog);
   dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-  dialog.addEventListener('close', () => { clearTimeout(autoSubmitTimer); input.value = ''; });
+  dialog.addEventListener('close', () => { clearTimeout(autoSubmitTimer); input.value = ''; puzzleUI?.cancel(); if(busy&&!master)lock(false); });
   document.addEventListener('keydown', () => { lastPointerType = 'keyboard'; }, {capture: true});
   input.addEventListener('input', () => {
     clearTimeout(autoSubmitTimer);
     setStatus('');
-    if (/^[0-9a-f]{32}$/i.test(input.value.replace(/[\s-]/gu, ''))) {
+    if (input.dataset.puzzle!=='true'&&/^[0-9a-f]{32}$/i.test(input.value.replace(/[\s-]/gu, ''))) {
       autoSubmitTimer = setTimeout(() => { if (!busy && dialog.open) form.requestSubmit(); }, 180);
     }
   });
@@ -665,7 +672,7 @@
     busy = true;
     input.setAttribute('aria-busy', 'true');
     input.disabled = true;
-    const code = input.value;
+    let code = input.value;
     input.value = '';
     setStatus('正在验证…');
     verificationLabel.textContent = '正在加载验证资料…';
@@ -675,6 +682,12 @@
     try {
       const currentManifest = await loadManifest(true);
       if (generation !== token) return;
+      puzzleUI?.set(currentManifest.puzzle||null);
+      if(currentManifest.puzzle) {
+        verificationLabel.textContent='正在验证谜底…';
+        code=await window.KamomePuzzle.unlock(currentManifest.puzzle,code,articleId);
+        if(generation!==token)return;
+      }
       verificationLabel.textContent = '正在验证访问码…';
       raw = await unwrapCode(currentManifest, code);
       const nextKey = await importMaster(raw);
@@ -688,8 +701,9 @@
       opener.focus();
       prepareReadings();
     } catch {
-      if (generation === token) setStatus(manifest ? '访问码不正确、已失效，或验证资料暂时无法加载。请确认后重试。' : '验证资料暂时无法加载，请稍后重试。', true);
+      if (generation === token) setStatus(manifest?.puzzle ? '谜底不正确，或验证暂时失败。' : manifest ? '访问码不正确、已失效，或验证资料暂时无法加载。请确认后重试。' : '验证资料暂时无法加载，请稍后重试。', true);
     } finally {
+      code='';
       raw?.fill(0);
       if (generation === token) {
         busy = false;

@@ -1,19 +1,21 @@
 ---
 layout: default
 ---
+{% include filter-posts.html %}
 <section class="articles" id="articles" aria-labelledby="articles-heading">
   <div class="section-head">
-    <h1 id="articles-heading">文章 <span class="count">{{ site.posts | size }}</span></h1>
+    <h1 id="articles-heading">文章 <span class="count">{{ listing_posts | size }}</span></h1>
     <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span class="sr-only">搜索标题或标签</span><input id="search" type="search" placeholder="搜索文章…" autocomplete="off"></label>
   </div>
-  {% if site.posts.size > 0 %}
-  <div class="filters" aria-label="按标签筛选"><button class="active" type="button" data-tag="" aria-pressed="true">全部</button>{% assign tags = site.tags | sort %}{% for tag in tags %}<button type="button" data-tag="{{ tag[0] | escape }}" aria-pressed="false">{{ tag[0] | escape }}</button>{% endfor %}</div>
+  {% if listing_posts.size > 0 %}
+  {% assign visible_tags = '' | split: ',' %}{% for item in listing_posts %}{% for tag in item.tags %}{% assign visible_tags = visible_tags | push: tag %}{% endfor %}{% endfor %}{% assign visible_tags = visible_tags | uniq | sort %}
+  <div class="filters" aria-label="按标签筛选"><button class="active" type="button" data-tag="" aria-pressed="true">全部</button>{% for tag in visible_tags %}<button type="button" data-tag="{{ tag | escape }}" aria-pressed="false">{{ tag | escape }}</button>{% endfor %}</div>
   {% endif %}
   <div id="posts" class="post-list">
     {% include ordered-posts.html %}
   </div>
-  {% if site.posts.size == 0 %}<p class="empty">还没有文章，下一页等待写下。</p>{% endif %}
+  {% if listing_posts.size == 0 %}<p class="empty">还没有文章，下一页等待写下。</p>{% endif %}
   <p id="no-results" class="empty" hidden>没有找到匹配的文章。换个关键词试试？</p>
   <span id="search-status" class="sr-only" role="status"></span>
-  {% if site.posts.size > 0 %}<a class="archive-link" href="{{ '/archive/' | relative_url }}">浏览全部文章 <span aria-hidden="true">↗</span></a>{% endif %}
+  {% if listing_posts.size > 0 %}<a class="archive-link" href="{{ '/archive/' | relative_url }}">浏览全部文章 <span aria-hidden="true">↗</span></a>{% endif %}
 </section>

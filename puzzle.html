@@ -1,0 +1,20 @@
+---
+layout: default
+title: Puzzle
+permalink: /puzzle/
+---
+{% include filter-posts.html scope='puzzles' %}
+<section class="articles" id="articles" aria-labelledby="articles-heading">
+  <div class="section-head">
+    <h1 id="articles-heading">Puzzle <span class="count">{{ listing_posts | size }}</span></h1>
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span class="sr-only">搜索谜题</span><input id="search" type="search" placeholder="搜索谜题…" autocomplete="off"></label>
+  </div>
+  {% if listing_posts.size > 0 %}
+  {% assign visible_tags = '' | split: ',' %}{% for item in listing_posts %}{% for tag in item.tags %}{% assign visible_tags = visible_tags | push: tag %}{% endfor %}{% endfor %}{% assign visible_tags = visible_tags | uniq | sort %}
+  <div class="filters" aria-label="按标签筛选"><button class="active" type="button" data-tag="" aria-pressed="true">全部</button>{% for tag in visible_tags %}<button type="button" data-tag="{{ tag | escape }}" aria-pressed="false">{{ tag | escape }}</button>{% endfor %}</div>
+  {% endif %}
+  <div id="posts" class="post-list">{% include ordered-posts.html scope='puzzles' %}</div>
+  {% if listing_posts.size == 0 %}<p class="empty">还没有谜题。</p>{% endif %}
+  <p id="no-results" class="empty" hidden>没有找到匹配的谜题。</p>
+  <span id="search-status" class="sr-only" role="status"></span>
+</section>
