@@ -1,8 +1,8 @@
 {
   "languages": {
     "zh": {
-      "html": "<p>这是一个测试，题目来源：北京大学谜协 2026 秋季招新。</p>\n<p><span class=\"sealed-block sealed-inline\" data-sealed=\"eyJjaXBoZXJ0ZXh0IjoiTjJ0eDNfRHh5alBtNDh5SHIza1VERElEVEhWbUxUYkRteVZYLXB6bjBJVzJGSDhYQmhRZmdxMnNUYVR4SWViSkVhRFJPZ0kiLCJlcG9jaCI6IjExOTM4YWRjNjYzOTY3MTBiZDcyYmFhMWVhMjVlZjU3IiwiaXYiOiIyWUh3dGV1eFlLZW1uV3c2IiwidiI6MX0\"><span class=\"sealed-placeholder\" data-chars=\"6\">此处内容需验证码解锁</span></span></p>\n",
-      "source": "这是一个测试，题目来源：北京大学谜协 2026 秋季招新。\n\n<span class=\"sealed-block sealed-inline\" data-sealed=\"eyJjaXBoZXJ0ZXh0IjoiTjJ0eDNfRHh5alBtNDh5SHIza1VERElEVEhWbUxUYkRteVZYLXB6bjBJVzJGSDhYQmhRZmdxMnNUYVR4SWViSkVhRFJPZ0kiLCJlcG9jaCI6IjExOTM4YWRjNjYzOTY3MTBiZDcyYmFhMWVhMjVlZjU3IiwiaXYiOiIyWUh3dGV1eFlLZW1uV3c2IiwidiI6MX0\"><span class=\"sealed-placeholder\" data-chars=\"6\">此处内容需验证码解锁</span></span>\n\n"
+      "html": "<p>这是一个测试，题目来源：北京大学谜协 2026 秋季招新。</p>\n<p>|旮旯| = <span class=\"math-inline\" data-tex=\"17\" data-display=\"false\">\\(17\\)</span></p>\n<p>|？？| = <span class=\"math-inline\" data-tex=\"1-8\\pi\" data-display=\"false\">\\(1-8\\pi\\)</span></p>\n<p><span class=\"sealed-block sealed-inline\" data-sealed=\"eyJjaXBoZXJ0ZXh0IjoiNXFwWUhNVXJJcHNKSUl3WVl2RWRxVEQ3TzNVUmpIMHZRWVZhbF9Bck14dllzcHBuRGpQYW1ZMkJHUE9Vcm5VTEc0UHBjNXciLCJlcG9jaCI6IjExOTM4YWRjNjYzOTY3MTBiZDcyYmFhMWVhMjVlZjU3IiwiaXYiOiJJR1FhdGtrLThNMU5halFQIiwidiI6MX0\"><span class=\"sealed-placeholder\" data-chars=\"6\">此处内容需验证码解锁</span></span></p>\n",
+      "source": "这是一个测试，题目来源：北京大学谜协 2026 秋季招新。\n\n|旮旯| = $17$\n\n|？？| = $1-8\\pi$\n\n<span class=\"sealed-block sealed-inline\" data-sealed=\"eyJjaXBoZXJ0ZXh0IjoiNXFwWUhNVXJJcHNKSUl3WVl2RWRxVEQ3TzNVUmpIMHZRWVZhbF9Bck14dllzcHBuRGpQYW1ZMkJHUE9Vcm5VTEc0UHBjNXciLCJlcG9jaCI6IjExOTM4YWRjNjYzOTY3MTBiZDcyYmFhMWVhMjVlZjU3IiwiaXYiOiJJR1FhdGtrLThNMU5halFQIiwidiI6MX0\"><span class=\"sealed-placeholder\" data-chars=\"6\">此处内容需验证码解锁</span></span>\n\n"
     }
   },
   "path": "_posts/2026-11-04-first-problem.md",
