@@ -1,4 +1,4 @@
-/* puzzle-rich:v2 — answer encryption and bounded, inert rich hints. */
+/* puzzle-rich:v2 — legacy descriptor compatibility; answer-only interface. */
 (() => {
   'use strict';
   const utf8=new TextEncoder(),decoder=new TextDecoder('utf-8',{fatal:true});
@@ -74,92 +74,17 @@
     }
     return raw;
   }
-  const assetBase=typeof document==='undefined'?null:new URL('./',document.currentScript.src);
-  let mathLoading=null;
-  async function math() {
-    if(window.katex)return window.katex;
-    if(!mathLoading)mathLoading=new Promise((resolve,reject)=>{
-      const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('private-reader/katex/katex.min.css',assetBase);css.referrerPolicy='no-referrer';document.head.append(css);
-      const script=document.createElement('script');script.src=new URL('private-reader/katex/katex.min.js',assetBase);script.referrerPolicy='no-referrer';
-      const timer=setTimeout(()=>reject(Error('Math unavailable')),10000);
-      script.onload=()=>{clearTimeout(timer);window.katex?resolve(window.katex):reject(Error('Math unavailable'));};script.onerror=()=>{clearTimeout(timer);reject(Error('Math unavailable'));};document.head.append(script);
-    }).catch(error=>{mathLoading=null;throw error;});
-    return mathLoading;
-  }
-  function richFragment(value) {
-    const template=document.createElement('template');template.innerHTML=value.html;
-    const allowed=new Set(['P','BR','HR','STRONG','EM','DEL','S','CODE','PRE','BLOCKQUOTE','UL','OL','LI','H1','H2','H3','H4','H5','H6','TABLE','THEAD','TBODY','TR','TD','TH','SUP','SUB','A','SPAN','DIV','IMG']);
-    const assets=new Map(value.assets.map(a=>[a.id,a]));let count=0;
-    function copy(source,target,depth=0){
-      if(depth>40)throw Error('Hint nesting too deep');
-      for(const node of source.childNodes){
-        if(++count>12000)throw Error('Hint too complex');
-        if(node.nodeType===3){target.append(document.createTextNode(node.textContent));continue;}
-        if(node.nodeType!==1||!allowed.has(node.tagName))continue;
-        const out=document.createElement(node.tagName.toLowerCase());
-        if(['SPAN','DIV'].includes(node.tagName)&&['math-inline','math-display'].some(c=>node.classList.contains(c))&&node.hasAttribute('data-tex')){
-          if(node.getAttribute('data-tex').length>8000)throw Error('Formula too large');
-          out.className=node.classList.contains('math-display')?'math-display':'math-inline';out.dataset.tex=node.getAttribute('data-tex');
-        }
-        const asset=assets.get(node.getAttribute('data-puzzle-asset'));
-        if(node.tagName==='IMG'){
-          if(!asset||asset.kind!=='image')continue;out.dataset.puzzleAsset=asset.id;out.alt=node.getAttribute('alt')||'';out.referrerPolicy='no-referrer';
-        }
-        if(node.tagName==='A'){
-          if(asset){out.dataset.puzzleAsset=asset.id;out.href='#';out.className='puzzle-download';}
-          else{try{const href=node.getAttribute('href'),url=new URL(href);if(['https:','http:','mailto:'].includes(url.protocol)&&!url.username&&!url.password){out.href=url.href;out.rel='noopener noreferrer';out.referrerPolicy='no-referrer';}}catch{}}
-        }
-        if(node.tagName==='OL'&&/^-?\d{1,6}$/.test(node.getAttribute('start')||''))out.setAttribute('start',node.getAttribute('start'));
-        if(['TD','TH'].includes(node.tagName)){const align=node.style.textAlign;if(['left','right','center'].includes(align))out.style.textAlign=align;}
-        copy(node,out,depth+1);target.append(out);
-      }
-    }
-    const result=document.createDocumentFragment();copy(template.content,result);return result;
-  }
   function attach(dialog,input,status,loader) {
-    const form=dialog.querySelector('form'),panel=document.createElement('section');panel.className='puzzle-hint';panel.hidden=true;
-    const hint=document.createElement('div'),submit=document.createElement('button');submit.type='button';submit.textContent='验证';submit.className='puzzle-verify';submit.addEventListener('click',()=>form.requestSubmit());panel.append(hint,submit);form.after(panel);
-    let revision=0,renderRevision=0,last='';const urls=new Set(),controllers=new Set();
-    function dispose(){renderRevision++;for(const controller of controllers)controller.abort();controllers.clear();for(const url of urls)URL.revokeObjectURL(url);urls.clear();hint.replaceChildren();last='';}
-    async function assetBytes(item){
-      const url=new URL('puzzles/media/'+item.id+'.bin',assetBase);if(url.origin!==location.origin)throw Error('Invalid origin');
-      const controller=new AbortController();controllers.add(controller);const timer=setTimeout(()=>controller.abort(),30000);
-      try{
-        const response=await fetch(url,{credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',redirect:'error',signal:controller.signal});
-        if(!response.ok||Number(response.headers.get('content-length'))>item.bytes+16)throw Error('Attachment unavailable');
-        const reader=response.body.getReader(),chunks=[];let length=0;
-        while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>item.bytes+16){await reader.cancel();throw Error('Too large');}chunks.push(value);}
-        const bytes=new Uint8Array(length);let at=0;for(const chunk of chunks){bytes.set(chunk,at);at+=chunk.length;}
-        return await decryptAsset(item,bytes);
-      }finally{clearTimeout(timer);controllers.delete(controller);}
-    }
-    function hydrate(value,token){
-      const alive=()=>renderRevision===token&&dialog.open;const items=new Map(value.assets.map(a=>[a.id,a]));
-      (async()=>{for(const node of hint.querySelectorAll('img[data-puzzle-asset]')){
-        if(!alive())return;
-        try{const bytes=await assetBytes(items.get(node.dataset.puzzleAsset));if(!alive()){bytes.fill(0);return;}const url=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));bytes.fill(0);urls.add(url);node.src=url;}
-        catch{if(alive())node.replaceWith(document.createTextNode('图片暂时无法加载'));}
-      }})();
-      for(const node of hint.querySelectorAll('a[data-puzzle-asset]')){let downloading=false;node.addEventListener('click',async event=>{
-        event.preventDefault();if(downloading||!alive())return;downloading=true;node.setAttribute('aria-busy','true');status.textContent='正在准备附件…';
-        try{const item=items.get(node.dataset.puzzleAsset),bytes=await assetBytes(item);if(!alive()){bytes.fill(0);return;}
-          const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));bytes.fill(0);urls.add(url);
-          const download=document.createElement('a');download.href=url;download.download=item.name;download.hidden=true;dialog.append(download);download.click();download.remove();status.textContent='';
-        }catch{if(alive())status.textContent='附件暂时无法下载，请重试。';}finally{downloading=false;node.removeAttribute('aria-busy');}
-      });}
-      const formulas=[...hint.querySelectorAll('[data-tex]')];
-      if(formulas.length){(async()=>{try{if(formulas.length>128)throw Error('Too many formulas');const katex=await math();for(const node of formulas){if(!alive())return;katex.render(node.dataset.tex,node,{displayMode:node.classList.contains('math-display'),throwOnError:false,macros:{'\\d':'\\mathrm{d}'},trust:false,strict:'error',maxExpand:1000,maxSize:20});}}catch{if(alive())status.textContent='公式暂时无法排版。';}})();}
-    }
+    const form=dialog.querySelector('form'),submit=document.createElement('button');
+    submit.type='submit';submit.textContent='验证';submit.className='puzzle-verify';submit.hidden=true;form.append(submit);
+    let revision=0;
     function set(value) {
       if(value)validate(value);
-      const signature=JSON.stringify(value);
-      if(signature!==last){dispose();last=signature;hint.className=value?.version===2?'puzzle-rich':'puzzle-plain';
-        if(value?.version===2){hint.append(richFragment(value));hydrate(value,renderRevision);}else if(value){const p=document.createElement('p');p.textContent=value.hint;hint.append(p);}}
-      panel.hidden=!value;hint.hidden=!value?.hint;
+      submit.hidden=!value;
       dialog.classList.toggle('puzzle-mode',!!value);input.dataset.puzzle=String(!!value);input.type=value?'text':'password';input.maxLength=value?256:80;
       input.setAttribute('aria-label',value?'谜底':'访问码');input.placeholder=value?'输入谜底':'';input.autocapitalize=value?'off':'characters';
     }
-    return {set,cancel(){revision++;dispose();panel.hidden=true;},async refresh(){const token=++revision;try{const value=await loader();if(token===revision&&dialog.open)set(value);}catch{if(token===revision&&dialog.open){status.textContent='提示暂时无法加载，请稍后重试。';}}}};
+    return {set,cancel(){revision++;submit.hidden=true;},async refresh(){const token=++revision;try{const value=await loader();if(token===revision&&dialog.open)set(value);}catch{if(token===revision&&dialog.open)status.textContent='谜题暂时无法加载，请稍后重试。';}}};
   }
   if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports={validate,normalize,unlock,openPrivate,validateAssets,decryptAsset};return;}
   window.KamomePuzzle=Object.freeze({validate,unlock,loadPrivate,attach});
