@@ -254,6 +254,7 @@
   }
 
   function clearReading(node, state) {
+    window.KamomePDF?.closeWithin(state.reading);
     try { window.MathJax?.typesetClear?.([state.reading]); } catch {}
     state.reading.replaceChildren();
     // A late typesetter must only retain a detached node from the old session.
@@ -278,6 +279,7 @@
   }
 
   function lock(announce = true) {
+    document.dispatchEvent(new Event('kamome-sealed-lock'));
     puzzleUI?.cancel();
     generation++;
     master = null;
@@ -317,6 +319,16 @@
       for (const child of source.childNodes) {
         if (child.nodeType === 3) { parent.append(document.createTextNode(child.textContent)); continue; }
         if (child.nodeType !== 1 || discard.has(child.tagName)) continue;
+        if (child.tagName === 'DIV' && child.classList.contains('pdf-embed')) {
+          const descriptor = window.KamomePDF?.cleanDescriptor(child.getAttribute('data-pdf'));
+          if (descriptor) {
+            const card = document.createElement('div');
+            card.className = 'pdf-embed';
+            card.dataset.pdf = descriptor;
+            parent.append(card);
+          }
+          continue;
+        }
         if (!allowed.has(child.tagName)) { copy(child, parent); continue; }
         const tag = /^H[1-6]$/.test(child.tagName) ? 'h3' : child.tagName.toLowerCase();
         const clean = document.createElement(tag);
@@ -370,8 +382,8 @@
     for (const child of [...parent.childNodes]) {
       if (child.nodeType === 3 && !child.textContent.trim()) continue;
       if (child.nodeType === 1) {
-        if (/^(IMG|BR|HR)$/.test(child.tagName)) continue;
-        if (structure.test(child.tagName) || child.querySelector('img')) { maskMediaText(child); continue; }
+        if (/^(IMG|BR|HR)$/.test(child.tagName) || child.matches('.pdf-embed')) continue;
+        if (structure.test(child.tagName) || child.querySelector('img,.pdf-embed')) { maskMediaText(child); continue; }
       } else if (child.nodeType !== 3) continue;
       const mask = document.createElement('span');mask.className = 'sealed-line-mask';
       const text = document.createElement('span');text.className = 'sealed-line-text';
@@ -444,7 +456,7 @@
       // The mask is an inline decoration around each paragraph's text. Its
       // last visual line ends where the text ends, without changing text flow.
       const paragraphs = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
-      state.hasImages = Boolean(fragment.querySelector('img'));
+      state.hasImages = Boolean(fragment.querySelector('img,.pdf-embed'));
       if (state.hasImages) {
         maskMediaText(fragment);
         node.dataset.media = 'true';
@@ -684,7 +696,7 @@
         renderState(node, state);
       });
       node.addEventListener('click', event => {
-        if (event.target.closest('a,img')) return;
+        if (event.target.closest('a,img,.pdf-embed')) return;
         if (!master) return;
         state.focus = false;
         state.pinned = !state.pinned;

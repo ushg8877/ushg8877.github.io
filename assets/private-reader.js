@@ -65,6 +65,7 @@
     status.textContent=text;input.setAttribute('aria-invalid',String(error));
   }
   function clearArticle() {
+    window.KamomePDF?.closeWithin(articleBody);
     if (!payload) return;
     // Detach all plaintext, images and in-flight render targets before releasing it.
     main.replaceChildren(missing.content.cloneNode(true));
@@ -100,6 +101,14 @@
       for(const child of source.childNodes) {
         if(child.nodeType===3){target.append(document.createTextNode(child.textContent));continue;}
         if(child.nodeType!==1||!allowed.has(child.tagName))continue;
+        if(child.tagName==='DIV'&&child.classList.contains('pdf-embed')){
+          const descriptor=window.KamomePDF?.cleanDescriptor(child.getAttribute('data-pdf'));
+          if(descriptor){
+            const card=document.createElement('div');card.className='pdf-embed';
+            card.dataset.pdf=descriptor;target.append(card);
+          }
+          continue;
+        }
         const clean=document.createElement(child.tagName.toLowerCase());
         for(const name of child.classList)if(classes.has(name))clean.classList.add(name);
         if(clean.classList.contains('blog-poll')&&/^[a-f0-9]{32}$/.test(child.getAttribute('data-poll-id')||'')){
@@ -134,9 +143,9 @@ function setupSecrets(root) {
     for (const child of [...parent.childNodes]) {
       if (child.nodeType === 3 && !child.textContent.trim()) continue;
       if (child.nodeType === 1) {
-        if (/^(IMG|BR|HR)$/.test(child.tagName)) continue;
+        if (/^(IMG|BR|HR)$/.test(child.tagName) || child.matches('.pdf-embed')) continue;
         // Keep the mask outside math: KaTeX replaces the math element's children.
-        if (!child.hasAttribute('data-tex') && (structure.test(child.tagName) || child.querySelector('img'))) {
+        if (!child.hasAttribute('data-tex') && (structure.test(child.tagName) || child.querySelector('img,.pdf-embed'))) {
           maskText(child); continue;
         }
       } else if (child.nodeType !== 3) continue;
@@ -150,7 +159,7 @@ function setupSecrets(root) {
     if (node.dataset.secretSetup) continue;
     node.dataset.secretSetup = 'true';
     const body = node.querySelector('.local-secret-body'); if (!body) continue;
-    const media = Boolean(body.querySelector('img'));
+    const media = Boolean(body.querySelector('img,.pdf-embed'));
     if (media) { node.classList.add('local-secret-media'); maskText(body); }
     const targets = media ? [...body.querySelectorAll('.local-secret-text')] : [body];
     if (!targets.length) { node.removeAttribute('tabindex'); node.removeAttribute('aria-label'); continue; }
@@ -179,7 +188,7 @@ function setupSecrets(root) {
       pointer = false; focus = false; render();
     });
     node.addEventListener('click', event => {
-      if (event.target.closest('a,img')) return;
+      if (event.target.closest('a,img,.pdf-embed')) return;
       toggle();
     });
     node.addEventListener('keydown', event => {
@@ -216,6 +225,7 @@ function setupSecrets(root) {
   }
   function showLanguage(next) {
     if(!payload?.languages[next])return;
+    window.KamomePDF?.closeWithin(articleBody);
     language=next;const version=payload.languages[next];
     titleNode.textContent=version.title;document.title=version.title+' · Kamome\'s Blog';
     articleBody.replaceChildren(fragment(version.html));articleBody.lang=next==='zh'?'zh-CN':next;
