@@ -1,15 +1,23 @@
 ---
 layout: default
 ---
-{% assign home_categories = site.data.categories.items | where: 'show_category', true %}
-{% if home_categories.size > 0 %}<section class="home-categories" aria-labelledby="categories-heading"><div class="section-head"><h2 id="categories-heading">分类</h2><a class="section-more" href="{{ '/categories/' | relative_url }}">全部分类 ↗</a></div><nav class="category-links" aria-label="主页分类">{% for group in home_categories %}{% include filter-posts.html scope='category' category=group.id %}<a href="{{ '/categories/' | relative_url }}#{{ group.id | escape }}"><span>{{ group.name | escape }}</span><span class="count">{{ listing_posts | size }}</span></a>{% endfor %}</nav></section>{% endif %}
-<section class="home-updates" aria-labelledby="updates-heading"><div class="section-head"><h2 id="updates-heading">更新履历</h2><a class="section-more" href="{{ '/updates/' | relative_url }}">全部记录 ↗</a></div>{% include update-list.html home=true %}</section>
+<div class="home-layout">
+  <div class="home-main">
 {% include filter-posts.html scope='home' %}
 <section class="articles" id="articles" aria-labelledby="articles-heading">
   <div class="section-head">
     <h1 id="articles-heading">文章 <span class="count">{{ listing_posts | size }}</span></h1>
     <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span class="sr-only">搜索标题或标签</span><input id="search" type="search" placeholder="搜索文章…" autocomplete="off"></label>
   </div>
+  {% assign home_categories = site.data.categories.items | where: 'show_category', true %}
+  {% if home_categories.size > 0 %}
+  <nav class="home-category-strip" aria-label="文章分类">
+    <span class="category-strip-label">分类</span>
+    <div class="category-links">{% for group in home_categories %}{% include filter-posts.html scope='category' category=group.id %}<a href="{{ '/categories/' | relative_url }}#{{ group.id | escape }}"><span>{{ group.name | escape }}</span><span class="count">{{ listing_posts | size }}</span></a>{% endfor %}</div>
+    <a class="section-more" href="{{ '/categories/' | relative_url }}">全部 ↗</a>
+  </nav>
+  {% endif %}
+  {% include filter-posts.html scope='home' %}
   {% if listing_posts.size > 0 %}
   {% assign visible_tags = '' | split: ',' %}{% for item in listing_posts %}{% for tag in item.tags %}{% assign visible_tags = visible_tags | push: tag %}{% endfor %}{% endfor %}{% assign visible_tags = visible_tags | uniq | sort %}
   <div class="filters" aria-label="按标签筛选"><button class="active" type="button" data-tag="" aria-pressed="true">全部</button>{% for tag in visible_tags %}<button type="button" data-tag="{{ tag | escape }}" aria-pressed="false">{{ tag | escape }}</button>{% endfor %}</div>
@@ -22,3 +30,15 @@ layout: default
   <span id="search-status" class="sr-only" role="status"></span>
   {% if listing_posts.size > 0 %}<a class="archive-link" href="{{ '/archive/' | relative_url }}">浏览全部文章 <span aria-hidden="true">↗</span></a>{% endif %}
 </section>
+
+  </div>
+  <aside class="home-sidebar" aria-labelledby="updates-heading" id="updates-sidebar">
+    <details class="home-updates" id="updates-panel" open>
+      <summary><h2 id="updates-heading">更新履历</h2><svg class="updates-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary>
+      <div class="update-drawer">
+        {% include update-list.html home=true %}
+        <a class="updates-all" href="{{ '/updates/' | relative_url }}">全部记录 <span aria-hidden="true">↗</span></a>
+      </div>
+    </details>
+  </aside>
+</div>
