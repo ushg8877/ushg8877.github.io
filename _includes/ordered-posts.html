@@ -5,7 +5,7 @@ falls back to priority 0 / the publication date. The final key breaks ties.
 {%- endcomment -%}
 {%- assign listing_scope = include.scope -%}
 {%- if include.mode == 'pagination' and page.access_id and site.data.puzzles contains page.access_id -%}{%- assign listing_scope = 'puzzles' -%}{%- endif -%}
-{%- include filter-posts.html scope=listing_scope -%}
+{%- include filter-posts.html scope=listing_scope category=include.category -%}
 {%- assign source_posts = listing_posts -%}
 {%- capture post_keys -%}
   {%- for item in source_posts -%}
@@ -38,7 +38,8 @@ falls back to priority 0 / the publication date. The final key breaks ties.
     {%- endif -%}
   {%- endfor -%}
 {%- else -%}
+  {%- assign home_listing = false -%}{%- if listing_scope == 'home' -%}{%- assign home_listing = true -%}{%- endif -%}
   {%- for item in ordered_posts -%}
-    {%- include post-card.html post=item -%}
+    {%- include post-card.html post=item home=home_listing -%}
   {%- endfor -%}
 {%- endif -%}

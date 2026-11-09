@@ -1,10 +1,21 @@
 {%- assign listing_posts = '' | split: ',' -%}
 {%- for candidate in site.posts -%}
+  {%- if candidate.published == false or candidate.private == true -%}{%- continue -%}{%- endif -%}
   {%- assign is_puzzle = false -%}
   {%- if candidate.access_id and site.data.puzzles contains candidate.access_id -%}{%- assign is_puzzle = true -%}{%- endif -%}
+  {%- assign accepted = false -%}
   {%- if include.scope == 'puzzles' -%}
-    {%- if is_puzzle -%}{%- assign listing_posts = listing_posts | push: candidate -%}{%- endif -%}
+    {%- if is_puzzle -%}{%- assign accepted = true -%}{%- endif -%}
+  {%- elsif include.scope == 'home' -%}
+    {%- include category-of.html item=candidate -%}
+    {%- if effective_category_entry.show_articles != false -%}{%- assign accepted = true -%}{%- endif -%}
+  {%- elsif include.scope == 'category' -%}
+    {%- include category-of.html item=candidate -%}
+    {%- if effective_category == include.category -%}{%- assign accepted = true -%}{%- endif -%}
+  {%- elsif include.scope == 'all' -%}
+    {%- assign accepted = true -%}
   {%- else -%}
-    {%- unless is_puzzle -%}{%- assign listing_posts = listing_posts | push: candidate -%}{%- endunless -%}
+    {%- unless is_puzzle -%}{%- assign accepted = true -%}{%- endunless -%}
   {%- endif -%}
+  {%- if accepted -%}{%- assign listing_posts = listing_posts | push: candidate -%}{%- endif -%}
 {%- endfor -%}

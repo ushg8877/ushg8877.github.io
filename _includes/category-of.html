@@ -1,0 +1,7 @@
+{%- assign effective_category = '' -%}
+{%- if include.item.article_category != nil -%}
+  {%- assign effective_category = include.item.article_category -%}
+{%- elsif include.item.access_id and site.data.puzzles contains include.item.access_id -%}
+  {%- assign effective_category = 'puzzle' -%}
+{%- endif -%}
+{%- assign effective_category_entry = site.data.categories.items | where: 'id', effective_category | first -%}

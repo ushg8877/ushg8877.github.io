@@ -1,0 +1,19 @@
+{%- assign history_scope = 'all' -%}
+{%- if include.home -%}{%- assign history_scope = 'home' -%}{%- endif -%}
+{%- include filter-posts.html scope=history_scope -%}
+{%- assign history_posts = listing_posts -%}
+{%- assign events = site.data.updates.events | sort: 'at' | reverse -%}
+{%- assign shown_updates = 0 -%}
+{%- assign current_time = site.time | date: '%s' | plus: 0 -%}
+<ol class="update-list">
+{%- for event in events -%}
+  {%- assign event_time = event.at | date: '%s' | plus: 0 -%}
+  {%- if event_time > current_time -%}{%- continue -%}{%- endif -%}
+  {%- assign update_post = history_posts | where: 'path', event.source | first -%}
+  {%- if event.kind != 'site' and update_post == nil -%}{%- continue -%}{%- endif -%}
+  <li><time datetime="{{ event.at | date_to_xmlschema }}">{{ event.at | date: '%Y.%m.%d %H:%M:%S' }}</time><div class="update-detail"><span class="update-kind">{% if event.kind == 'publish' %}发布{% elsif event.kind == 'update' %}更新{% else %}网站{% endif %}</span>{% if event.kind == 'site' %}<span>{{ event.title | escape }}</span>{% else %}<a href="{{ update_post.url | relative_url }}">{{ event.title | escape }}</a>{% endif %}{% if event.summary != '' %}<span class="update-summary">{{ event.summary | escape }}</span>{% endif %}</div></li>
+  {%- assign shown_updates = shown_updates | plus: 1 -%}
+  {%- if include.home and shown_updates >= 6 -%}{%- break -%}{%- endif -%}
+{%- endfor -%}
+</ol>
+{%- if shown_updates == 0 -%}<p class="empty">还没有更新记录。</p>{%- endif -%}

@@ -1,0 +1,14 @@
+---
+layout: default
+title: 文章分类
+permalink: /categories/
+---
+<header class="page-heading"><h1>分类<span class="heading-dot">。</span></h1></header>
+<nav class="category-links" aria-label="文章分类">{% for group in site.data.categories.items %}<a href="#{{ group.id | escape }}">{{ group.name | escape }}</a>{% endfor %}<a href="#uncategorized">未分类</a></nav>
+{% for group in site.data.categories.items %}
+{% include filter-posts.html scope='category' category=group.id %}
+<section class="category-section" id="{{ group.id | escape }}"><div class="section-head"><h2>{{ group.name | escape }} <span class="count">{{ listing_posts | size }}</span></h2></div>
+<div class="post-list">{% include ordered-posts.html scope='category' category=group.id %}</div>{% if listing_posts.size == 0 %}<p class="empty">这个分类还没有文章。</p>{% endif %}</section>
+{% endfor %}
+{% include filter-posts.html scope='category' category='' %}
+{% if listing_posts.size > 0 %}<section class="category-section" id="uncategorized"><div class="section-head"><h2>未分类 <span class="count">{{ listing_posts | size }}</span></h2></div><div class="post-list">{% include ordered-posts.html scope='category' category='' %}</div></section>{% endif %}

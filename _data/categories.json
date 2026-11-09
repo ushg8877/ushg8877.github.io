@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "puzzle",
+      "name": "Puzzle",
+      "show_articles": false,
+      "show_category": false
+    }
+  ]
+}
