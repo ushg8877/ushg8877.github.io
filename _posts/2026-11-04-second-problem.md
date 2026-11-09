@@ -36,4 +36,4 @@ g++ -O2 -std=c++17 grader.cpp solution.cpp -o grader
 
 运行后，将输出的验证码填入网页。
 
-<span class="sealed-block sealed-inline" data-sealed="eyJjaXBoZXJ0ZXh0IjoiWmxMV1pKdG9BOG5mMjJfNnE5b0hCM2dDSTlBY3JvREs5SXVHeFBZYUo2NEhQNERtdFNMTnJYanpLaU82cXN5STl3SXFXVGlWcE8yeWN4bGhFMjg3VlVxUTdKQktrT3RpZlU0SEJQOCIsImVwb2NoIjoiZjZjMjhhMDBkMjYxMmIzNDdhYzBjMjAwODNjMTJmZTAiLCJpdiI6Ilo0NnNUZDAtRlppVEJPbjEiLCJ2IjoxfQ"><span class="sealed-placeholder" data-chars="6">此处内容需验证码解锁</span></span>
+<span class="sealed-block sealed-inline" data-sealed="eyJjaXBoZXJ0ZXh0IjoiWmxMV1pKdG9BOG5mMjJfNnE5b0hCM2dDSTlBY3JvREs5SXVHeFBZYUo2NEhQNERtdFNMTnJYanpLaU82cXN5STl3SXFXVGlWcE8yeWN4bGhFMjg3VlVxUTdKQktrT3RpZlU0SEJQOCIsImVwb2NoIjoiZjZjMjhhMDBkMjYxMmIzNDdhYzBjMjAwODNjMTJmZTAiLCJpdiI6Ilo0NnNUZDAtRlppVEJPbjEiLCJ2IjoxfQ"><span class="sealed-placeholder" data-chars="6" data-images="0">此处内容需验证码解锁</span></span>
