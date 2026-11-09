@@ -18,6 +18,12 @@
       "name": "周记",
       "show_articles": true,
       "show_category": true
+    },
+    {
+      "id": "c-07f8889fa753",
+      "name": "笔记",
+      "show_articles": false,
+      "show_category": true
     }
   ]
 }
