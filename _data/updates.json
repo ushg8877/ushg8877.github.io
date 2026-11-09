@@ -351,6 +351,42 @@
       "summary": "",
       "source": "",
       "url": ""
+    },
+    {
+      "id": "c6f2f58a8c870c89213efe7bd39a0de7",
+      "at": "2026-11-09T18:20:28+08:00",
+      "kind": "update",
+      "title": "A Yuri week",
+      "summary": "正文、分类",
+      "source": "_posts/2026-10-18-20261018.md",
+      "url": "/posts/20261018/"
+    },
+    {
+      "id": "1145a27688fc0ff66de62a158f60b8e0",
+      "at": "2026-11-09T18:20:28+08:00",
+      "kind": "update",
+      "title": "A Troublesome week",
+      "summary": "分类",
+      "source": "_posts/2026-10-29-a-pirate-week.md",
+      "url": "/posts/a-troublesome-week/"
+    },
+    {
+      "id": "f3494931dbf2088ddbc779ecfc6a3d35",
+      "at": "2026-11-09T18:20:28+08:00",
+      "kind": "update",
+      "title": "百合研究日志 1",
+      "summary": "分类",
+      "source": "_posts/2026-11-04-yuri-dairy-1.md",
+      "url": "/posts/yuri-dairy-1/"
+    },
+    {
+      "id": "e40155f7eb8dc1ba6dc64625646c5975",
+      "at": "2026-11-09T18:20:28+08:00",
+      "kind": "update",
+      "title": "A Training week",
+      "summary": "正文、分类",
+      "source": "_posts/2026-11-09-awbw.md",
+      "url": "/posts/awbw/"
     }
   ]
 }
