@@ -387,6 +387,78 @@
       "summary": "正文、分类",
       "source": "_posts/2026-11-09-awbw.md",
       "url": "/posts/awbw/"
+    },
+    {
+      "id": "0506200437e720f15fafbbff562dcfac",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "数分笔记",
+      "summary": "分类",
+      "source": "_posts/2026-10-19-note.md",
+      "url": "/posts/note/"
+    },
+    {
+      "id": "12aa3a6a9153762d03b3e617dfd19d1f",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "百合同人文 1",
+      "summary": "正文、分类",
+      "source": "_posts/2026-10-19-tongren1.md",
+      "url": "/posts/tongren1/"
+    },
+    {
+      "id": "6756d5b5b6fac16b8faacec607c2f53b",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "高代笔记",
+      "summary": "分类",
+      "source": "_posts/2026-10-21-gd-note.md",
+      "url": "/posts/gd-note/"
+    },
+    {
+      "id": "81b221711b1a1c23d8ef196cdc94da23",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "百合小说 1.1",
+      "summary": "正文、分类",
+      "source": "_posts/2026-10-22-yuri-1-1.md",
+      "url": "/posts/yuri-1-1/"
+    },
+    {
+      "id": "5ee76f751ae0a13a468888f5eab55cde",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "A Reset week",
+      "summary": "正文、分类",
+      "source": "_posts/2026-10-25-a-reset-week.md",
+      "url": "/posts/a-reset-week/"
+    },
+    {
+      "id": "b0586bbf462867843154abc005133173",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "百合同人文 2",
+      "summary": "正文、分类",
+      "source": "_posts/2026-10-27-yuri-2.md",
+      "url": "/posts/yuri-2/"
+    },
+    {
+      "id": "0770971d6f1a194f330a168012964cbf",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "过往种种、怎忍遗忘",
+      "summary": "分类",
+      "source": "_posts/2026-11-02-ming-ai.md",
+      "url": "/posts/ming-ai/"
+    },
+    {
+      "id": "8a160147c807901fd665a5c729942335",
+      "at": "2026-11-09T23:05:13+08:00",
+      "kind": "update",
+      "title": "百合研究日志 1",
+      "summary": "分类",
+      "source": "_posts/2026-11-04-yuri-dairy-1.md",
+      "url": "/posts/yuri-dairy-1/"
     }
   ]
 }
