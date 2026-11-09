@@ -1,9 +1,19 @@
 .private-loading{padding:12px 18px;background:var(--paper);border-radius:6px}
-.local-secret{background:#222;color:transparent;cursor:pointer;box-decoration-break:clone;-webkit-box-decoration-break:clone}
-.local-secret-inline{display:inline}
-.local-secret:has(img){display:inline-block;max-width:100%;vertical-align:middle}
-.local-secret-body img{display:block;max-width:100%;height:auto;margin:0}
-.local-secret .local-secret-body,.local-secret .local-secret-body *{visibility:hidden}
-.local-secret:hover,.local-secret:focus-within,.local-secret.private-revealed{background:transparent;color:inherit}
-.local-secret:hover .local-secret-body,.local-secret:focus-within .local-secret-body,.local-secret.private-revealed .local-secret-body,.local-secret:hover .local-secret-body *,.local-secret:focus-within .local-secret-body *,.local-secret.private-revealed .local-secret-body *{visibility:visible}
-[data-theme="dark"] .local-secret:not(:hover):not(:focus-within):not(.private-revealed){background:#08090c}
+
+.local-secret { display:table; max-width:100%; margin:1em 0; padding:0 .08em; border-radius:0; background:#222; color:inherit; outline-offset:3px; cursor:pointer; }
+.local-secret-inline { display:inline; margin:0; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+.local-secret:has(img) { display:inline-block; max-width:100%; padding:0; vertical-align:middle; }
+.local-secret-body img { display:block; max-width:100%; height:auto; margin:0; }
+.local-secret-body > :first-child { margin-top:0; }
+.local-secret-body > :last-child { margin-bottom:0; }
+.local-secret:not(.local-secret-media):not([data-revealed="true"]) .local-secret-body,
+.local-secret:not(.local-secret-media):not([data-revealed="true"]) .local-secret-body * { visibility:hidden!important; }
+.local-secret[data-revealed="true"], .local-secret.local-secret-media { background:transparent; }
+.local-secret-text-mask { box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+.local-secret:not([data-revealed="true"]) .local-secret-text-mask { background:#222; }
+.local-secret:not([data-revealed="true"]) .local-secret-text,
+.local-secret:not([data-revealed="true"]) .local-secret-text * { visibility:hidden!important; }
+.local-secret-media:not([aria-expanded]) { cursor:default; }
+
+[data-theme="dark"] .local-secret:not(.local-secret-media):not([data-revealed="true"]),
+[data-theme="dark"] .local-secret:not([data-revealed="true"]) .local-secret-text-mask { background:#08090c; }

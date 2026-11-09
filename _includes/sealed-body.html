@@ -7,11 +7,13 @@ Legacy count entries are bound to the exact public ciphertext, never to an ordin
 {%- assign lines = include.html | split: newline -%}
 {%- assign run_html = '' -%}
 {%- assign run_count = 0 -%}
+{%- assign run_images = 0 -%}
 {%- assign run_blocks = 0 -%}
 {%- for line in lines -%}
   {%- assign rendered_line = line -%}
   {%- assign remainder = line -%}
   {%- assign line_count = 0 -%}
+  {%- assign line_images = 0 -%}
   {%- assign line_blocks = 0 -%}
   {%- assign line_known = true -%}
   {%- assign kinds = 'div,span' | split: ',' -%}
@@ -29,19 +31,27 @@ Legacy count entries are bound to the exact public ciphertext, never to an ordin
       {%- capture marker -%}{{ opening }}{{ inside }}{{ closing }}{%- endcapture -%}
       {%- assign cipher = inside | split: '"' | first -%}
       {%- assign count = nil -%}
+      {%- assign images = 0 -%}
+      {%- assign legacy = nil -%}
+      {%- unless marker contains 'data-chars="' and marker contains 'data-images="' -%}
+        {%- assign legacy = site.data.sealed_counts | where: 'cipher', cipher | first -%}
+      {%- endunless -%}
       {%- if marker contains 'data-chars="' -%}
         {%- assign count = marker | split: 'data-chars="' | last | split: '"' | first | plus: 0 -%}
       {%- else -%}
-        {%- assign legacy = site.data.sealed_counts | where: 'cipher', cipher | first -%}
         {%- assign count = legacy.chars -%}
-        {%- if count != nil -%}
-          {%- capture counted_placeholder -%}class="sealed-placeholder" data-chars="{{ count }}"{%- endcapture -%}
-          {%- assign counted_marker = marker | replace: 'class="sealed-placeholder"', counted_placeholder -%}
-          {%- assign rendered_line = rendered_line | replace: marker, counted_marker -%}
-        {%- endif -%}
       {%- endif -%}
+      {%- if marker contains 'data-images="' -%}
+        {%- assign images = marker | split: 'data-images="' | last | split: '"' | first | plus: 0 -%}
+      {%- else -%}
+        {%- assign images = legacy.images | default: 0 -%}
+      {%- endif -%}
+      {%- capture counted_placeholder -%}class="sealed-placeholder"{% unless marker contains 'data-chars="' %}{% if count != nil %} data-chars="{{ count }}"{% endif %}{% endunless %}{% unless marker contains 'data-images="' %} data-images="{{ images }}"{% endunless %}{%- endcapture -%}
+      {%- assign counted_marker = marker | replace: 'class="sealed-placeholder"', counted_placeholder -%}
+      {%- assign rendered_line = rendered_line | replace: marker, counted_marker -%}
       {%- if count == nil -%}{%- assign line_known = false -%}{%- endif -%}
       {%- assign line_count = line_count | plus: count -%}
+      {%- assign line_images = line_images | plus: images -%}
       {%- assign line_blocks = line_blocks | plus: 1 -%}
       {%- assign remainder = remainder | remove: marker -%}
     {%- endfor -%}
@@ -50,11 +60,12 @@ Legacy count entries are bound to the exact public ciphertext, never to an ordin
   {%- if remainder == '' and line_known -%}
     {%- assign run_html = run_html | append: rendered_line | append: newline -%}
     {%- assign run_count = run_count | plus: line_count -%}
+    {%- assign run_images = run_images | plus: line_images -%}
     {%- assign run_blocks = run_blocks | plus: line_blocks -%}
   {%- else -%}
-    {%- if run_blocks > 0 -%}<div class="sealed-run"><p class="sealed-summary">【此处省略 {{ run_count }} 字】</p><div class="sealed-run-content" hidden>{{ run_html }}</div></div>{{ newline }}{%- else -%}{{ run_html }}{%- endif -%}
+    {%- if run_blocks > 0 -%}<div class="sealed-run"><p class="sealed-summary">【此处省略 {% if run_count > 0 or run_images == 0 %}{{ run_count }} 字{% if run_images > 0 %}和 {% endif %}{% endif %}{% if run_images > 0 %}{{ run_images }} 张图片{% endif %}】</p><div class="sealed-run-content" hidden>{{ run_html }}</div></div>{{ newline }}{%- else -%}{{ run_html }}{%- endif -%}
     {{- rendered_line -}}{{- newline -}}
-    {%- assign run_html = '' -%}{%- assign run_count = 0 -%}{%- assign run_blocks = 0 -%}
+    {%- assign run_html = '' -%}{%- assign run_count = 0 -%}{%- assign run_images = 0 -%}{%- assign run_blocks = 0 -%}
   {%- endif -%}
 {%- endfor -%}
-{%- if run_blocks > 0 -%}<div class="sealed-run"><p class="sealed-summary">【此处省略 {{ run_count }} 字】</p><div class="sealed-run-content" hidden>{{ run_html }}</div></div>{%- else -%}{{ run_html }}{%- endif -%}
+{%- if run_blocks > 0 -%}<div class="sealed-run"><p class="sealed-summary">【此处省略 {% if run_count > 0 or run_images == 0 %}{{ run_count }} 字{% if run_images > 0 %}和 {% endif %}{% endif %}{% if run_images > 0 %}{{ run_images }} 张图片{% endif %}】</p><div class="sealed-run-content" hidden>{{ run_html }}</div></div>{%- else -%}{{ run_html }}{%- endif -%}

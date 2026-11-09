@@ -268,8 +268,10 @@
     state.queued = false;
     state.failed = false;
     state.revealed = false;
+    state.hasImages = false;
     delete node.dataset.ready;
     delete node.dataset.lineMask;
+    delete node.dataset.media;
     node.removeAttribute('aria-busy');
     node.dataset.revealed = 'false';
     state.button.setAttribute('aria-expanded', 'false');
@@ -297,7 +299,7 @@
     for (const node of blocks()) {
       const state = states.get(node);
       if (!state) continue;
-      state.hover = state.focus = state.pinned = false;
+      state.hover = state.focus = state.pinned = state.suppressHover = false;
       clearReading(node, state);
     }
     updateAccessUi();
@@ -359,7 +361,23 @@
     return fragment;
   }
 
-  function wantsReading(state) { return Boolean(master && (state.hover || state.focus || state.pinned)); }
+  function wantsReading(state) { return Boolean(master && (state.pinned || (!state.suppressHover && (state.hover || state.focus)))); }
+
+  function maskMediaText(parent) {
+    // Preserve image/list/table structure. Only text and image-free inline
+    // subtrees get a mask; revealing an image must never reveal its caption.
+    const structure = /^(P|DIV|BLOCKQUOTE|UL|OL|LI|H[1-6]|TABLE|THEAD|TBODY|TFOOT|TR|TD|TH|DL|DT|DD|PRE)$/;
+    for (const child of [...parent.childNodes]) {
+      if (child.nodeType === 3 && !child.textContent.trim()) continue;
+      if (child.nodeType === 1) {
+        if (/^(IMG|BR|HR)$/.test(child.tagName)) continue;
+        if (structure.test(child.tagName) || child.querySelector('img')) { maskMediaText(child); continue; }
+      } else if (child.nodeType !== 3) continue;
+      const mask = document.createElement('span');mask.className = 'sealed-line-mask';
+      const text = document.createElement('span');text.className = 'sealed-line-text';
+      child.replaceWith(mask);text.append(child);mask.append(text);
+    }
+  }
 
   function renderState(node, state) {
     // Authorized content keeps the same inline/block flow under its mask.
@@ -367,8 +385,13 @@
     const revealed = state.ready && wantsReading(state);
     state.revealed = revealed;
     node.dataset.revealed = String(revealed);
-    state.reading.inert = !revealed;
-    state.reading.setAttribute('aria-hidden', String(!revealed));
+    const accessible = state.ready && (revealed || state.hasImages);
+    state.reading.inert = !accessible;
+    state.reading.setAttribute('aria-hidden', String(!accessible));
+    if (state.hasImages) for (const text of state.reading.querySelectorAll('.sealed-line-text')) {
+      text.inert = !revealed;
+      text.setAttribute('aria-hidden', String(!revealed));
+    }
     state.button.setAttribute('aria-expanded', String(revealed));
     if (master && !state.ready) queueReading(node, state, wantsReading(state));
   }
@@ -421,7 +444,11 @@
       // The mask is an inline decoration around each paragraph's text. Its
       // last visual line ends where the text ends, without changing text flow.
       const paragraphs = [...fragment.childNodes].filter(child => child.nodeType !== 3 || child.textContent.trim());
-      if (!node.classList.contains('sealed-inline') && paragraphs.length && paragraphs.every(child => child.nodeName === 'P' && !child.querySelector('img'))) {
+      state.hasImages = Boolean(fragment.querySelector('img'));
+      if (state.hasImages) {
+        maskMediaText(fragment);
+        node.dataset.media = 'true';
+      } else if (!node.classList.contains('sealed-inline') && paragraphs.length && paragraphs.every(child => child.nodeName === 'P' && !child.querySelector('img'))) {
         for (const paragraph of paragraphs) {
           const mask = document.createElement('span');
           mask.className = 'sealed-line-mask';
@@ -483,16 +510,23 @@
       const summary = run.querySelector(':scope > .sealed-summary');
       const content = run.querySelector(':scope > .sealed-run-content');
       const total = wholeSecret(content);
-      const label = `【此处省略 ${total?.known ? total.count : '…'} 字】`;
+      const label = omissionLabel(total);
       if (summary.textContent !== label) summary.textContent = label;
       summary.hidden = Boolean(master);
       content.hidden = !master;
     }
   }
 
+  function omissionLabel(total) {
+    if (!total?.known || !total?.imagesKnown) return '【此处省略 … 字】';
+    if (total.images && !total.count) return `【此处省略 ${total.images} 张图片】`;
+    if (total.images) return `【此处省略 ${total.count} 字和 ${total.images} 张图片】`;
+    return `【此处省略 ${total.count} 字】`;
+  }
+
   async function fillMissingCounts() {
     const pending = [...(article?.querySelectorAll('.sealed-group,.sealed-block:not(.sealed-part)') || [])]
-      .filter(node => node.dataset.chars === undefined && !countRequests.has(node));
+      .filter(node => (node.dataset.chars === undefined || node.dataset.images === undefined) && !countRequests.has(node));
     if (!pending.length) return;
     pending.forEach(node => countRequests.add(node));
     // Older open editor windows may republish a ciphertext without its new
@@ -509,7 +543,8 @@
         if (text.length > 500000) return {};
         const data = JSON.parse(text);
         if (data.version !== 1 || !data.counts || typeof data.counts !== 'object' || Array.isArray(data.counts)) return {};
-        return data.counts;
+        const images = data.images && typeof data.images === 'object' && !Array.isArray(data.images) ? data.images : {};
+        return {counts:data.counts,images};
       } catch { return {}; }
       finally { clearTimeout(timeout); }
     })();
@@ -520,43 +555,48 @@
         if (!cipher) return;
         const hash = await crypto.subtle.digest('SHA-256', utf8.encode(cipher));
         const key = [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('');
-        const count = counts[key];
+        const count = counts.counts?.[key], images = counts.images?.[key];
         if (node.isConnected && Number.isInteger(count) && count >= 0 && count <= 4_000_000) node.dataset.chars = String(count);
+        if (node.isConnected && Number.isInteger(images) && images >= 0 && images <= 100000) node.dataset.images = String(images);
       } catch {}
     }));
     updateSummaries();
   }
 
   function wholeSecret(node) {
-    if (node.nodeType === 8 || (node.nodeType === 3 && !node.textContent.trim())) return {blocks: 0, count: 0, known: true};
+    if (node.nodeType === 8 || (node.nodeType === 3 && !node.textContent.trim())) return {blocks: 0, count: 0, known: true, images:0, imagesKnown:true};
     if (node.nodeType !== 1) return null;
     if (node.matches('.sealed-group,.sealed-block[data-sealed]')) {
       const value = node.dataset.chars || '';
       const known = /^\d{1,8}$/.test(value) && Number(value) <= 4_000_000;
-      return {blocks: 1, count: known ? Number(value) : 0, known};
+      const images = node.dataset.images || '';
+      const imagesKnown = /^\d{1,6}$/.test(images) && Number(images) <= 100000;
+      return {blocks: 1, count: known ? Number(value) : 0, known, images:imagesKnown?Number(images):0, imagesKnown};
     }
     if (!/^(P|DIV|SECTION|BLOCKQUOTE|UL|OL|LI|SPAN|STRONG|EM|B|I|U|S|DEL|H[1-6]|BR)$/.test(node.tagName) || node.classList.contains('sealed-run')) return null;
-    const result = {blocks: 0, count: 0, known: true};
+    const result = {blocks: 0, count: 0, known: true, images:0, imagesKnown:true};
     for (const child of node.childNodes) {
       const part = wholeSecret(child);
       if (!part) return null; // Even one public word keeps this paragraph inline.
       result.blocks += part.blocks;
       result.count += part.count;
       result.known &&= part.known;
+      result.images += part.images;
+      result.imagesKnown &&= part.imagesKnown;
     }
     return result;
   }
 
   function prepareSummaries(parent = article) {
     if (!parent) return;
-    let nodes = [], count = 0, known = true, blocks = 0;
+    let nodes = [], count = 0, known = true, blocks = 0, images = 0, imagesKnown = true;
     function flush() {
       if (blocks) {
         const run = document.createElement('div');
         run.className = 'sealed-run';
         const summary = document.createElement('p');
         summary.className = 'sealed-summary';
-        summary.textContent = `【此处省略 ${known ? count : '…'} 字】`;
+        summary.textContent = omissionLabel({count,known,images,imagesKnown});
         summary.hidden = Boolean(master);
         const content = document.createElement('div');
         content.className = 'sealed-run-content';
@@ -565,13 +605,14 @@
         content.append(...nodes);
         run.append(summary, content);
       }
-      nodes = []; count = 0; known = true; blocks = 0;
+      nodes = []; count = 0; known = true; blocks = 0; images = 0; imagesKnown = true;
     }
     for (const node of [...parent.childNodes]) {
       const part = wholeSecret(node);
       if (part) {
         if (part.blocks || nodes.length) nodes.push(node);
         blocks += part.blocks; count += part.count; known &&= part.known;
+        images += part.images; imagesKnown &&= part.imagesKnown;
         continue;
       }
       flush();
@@ -588,11 +629,13 @@
       const placeholder = node.querySelector(':scope > .sealed-placeholder');
       const layout = placeholder?.dataset.parts;
       if (placeholder?.dataset.chars !== undefined) node.dataset.chars = placeholder.dataset.chars;
+      if (placeholder?.dataset.images !== undefined) node.dataset.images = placeholder.dataset.images;
       if (!node.classList.contains('sealed-inline') && layout && /^(?:[1-9]|[1-3][0-9]|4[0-4])(?:,(?:[1-9]|[1-3][0-9]|4[0-4]))*$/.test(layout)) {
         const group = document.createElement('div');
         group.className = 'sealed-group';
         group.dataset.sealed = node.dataset.sealed;
         if (node.dataset.chars !== undefined) group.dataset.chars = node.dataset.chars;
+        if (node.dataset.images !== undefined) group.dataset.images = node.dataset.images;
         layout.split(',').forEach((width, index) => {
           const part = document.createElement('div');
           part.className = 'sealed-block sealed-part';
@@ -617,12 +660,13 @@
       reading.hidden = true;
       reading.inert = true;
       reading.setAttribute('aria-hidden', 'true');
-      const state = {button, reading, hover: false, focus: false, pinned: false, revealed: false, ready: false, pending: null, queued: false, failed: false};
+      const state = {button, reading, hover: false, focus: false, pinned: false, suppressHover:false, revealed: false, ready: false, pending: null, queued: false, failed: false};
       states.set(node, state);
       node.replaceChildren(button, reading);
       node.dataset.revealed = 'false';
       node.addEventListener('pointerenter', event => {
         if (event.pointerType === 'touch' || event.pointerType === 'pen') return;
+        state.suppressHover = false;
         state.hover = true;
         renderState(node, state);
       });
@@ -630,6 +674,7 @@
       node.addEventListener('pointerdown', event => { lastPointerType = event.pointerType; });
       node.addEventListener('focusin', () => {
         if (lastPointerType !== 'keyboard') return;
+        state.suppressHover = false;
         state.focus = true;
         renderState(node, state);
       });
@@ -639,12 +684,12 @@
         renderState(node, state);
       });
       node.addEventListener('click', event => {
-        if (event.target.closest('a')) return;
+        if (event.target.closest('a,img')) return;
         if (!master) return;
-        // A pointer click must not fight the focus event or desktop hover.
-        if (lastPointerType === 'mouse') return;
         state.focus = false;
         state.pinned = !state.pinned;
+        state.suppressHover = !state.pinned;
+        if (!state.pinned) state.hover = false;
         renderState(node, state);
       });
     }

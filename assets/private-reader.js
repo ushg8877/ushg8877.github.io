@@ -127,6 +127,69 @@
     const result=document.createDocumentFragment();copy(template.content,result);return result;
   }
 
+
+function setupSecrets(root) {
+  const structure = /^(P|DIV|SECTION|BLOCKQUOTE|UL|OL|LI|H[1-6]|TABLE|THEAD|TBODY|TFOOT|TR|TD|TH|DL|DT|DD|PRE)$/;
+  function maskText(parent) {
+    for (const child of [...parent.childNodes]) {
+      if (child.nodeType === 3 && !child.textContent.trim()) continue;
+      if (child.nodeType === 1) {
+        if (/^(IMG|BR|HR)$/.test(child.tagName)) continue;
+        // Keep the mask outside math: KaTeX replaces the math element's children.
+        if (!child.hasAttribute('data-tex') && (structure.test(child.tagName) || child.querySelector('img'))) {
+          maskText(child); continue;
+        }
+      } else if (child.nodeType !== 3) continue;
+      const tag = child.nodeType === 1 && structure.test(child.tagName) ? 'div' : 'span';
+      const mask = document.createElement(tag), text = document.createElement(tag);
+      mask.className = 'local-secret-text-mask'; text.className = 'local-secret-text';
+      child.replaceWith(mask); text.append(child); mask.append(text);
+    }
+  }
+  for (const node of root.querySelectorAll('.local-secret')) {
+    if (node.dataset.secretSetup) continue;
+    node.dataset.secretSetup = 'true';
+    const body = node.querySelector('.local-secret-body'); if (!body) continue;
+    const media = Boolean(body.querySelector('img'));
+    if (media) { node.classList.add('local-secret-media'); maskText(body); }
+    const targets = media ? [...body.querySelectorAll('.local-secret-text')] : [body];
+    if (!targets.length) { node.removeAttribute('tabindex'); node.removeAttribute('aria-label'); continue; }
+    let hover = false, focus = false, pinned = false, suppressed = false, pointer = false;
+    function render() {
+      const revealed = pinned || (!suppressed && (hover || focus));
+      node.dataset.revealed = String(revealed); node.setAttribute('aria-expanded', String(revealed));
+      for (const target of targets) { target.inert = !revealed; target.setAttribute('aria-hidden', String(!revealed)); }
+    }
+    function toggle() {
+      pinned = !pinned; suppressed = !pinned; focus = false;
+      if (!pinned) hover = false;
+      render();
+    }
+    node.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'touch' || event.pointerType === 'pen') return;
+      suppressed = false; hover = true; render();
+    });
+    node.addEventListener('pointerleave', () => { hover = false; render(); });
+    node.addEventListener('pointerdown', () => { pointer = true; });
+    node.addEventListener('focusin', () => {
+      if (!pointer) { suppressed = false; focus = true; render(); }
+    });
+    node.addEventListener('focusout', event => {
+      if (node.contains(event.relatedTarget)) return;
+      pointer = false; focus = false; render();
+    });
+    node.addEventListener('click', event => {
+      if (event.target.closest('a,img')) return;
+      toggle();
+    });
+    node.addEventListener('keydown', event => {
+      if (event.target !== node || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault(); pointer = false; toggle();
+    });
+    render();
+  }
+}
+
   function loadMath() {
     if(window.katex)return Promise.resolve(window.katex);
     if(mathLoading)return mathLoading;
@@ -157,6 +220,7 @@
     titleNode.textContent=version.title;document.title=version.title+' · Kamome\'s Blog';
     articleBody.replaceChildren(fragment(version.html));articleBody.lang=next==='zh'?'zh-CN':next;
     for(const button of languageButtons.children)button.setAttribute('aria-pressed',String(button.dataset.language===next));
+    setupSecrets(articleBody);
     renderMath(articleBody,generation);
   }
   function showArticle(value) {
@@ -212,9 +276,6 @@
       code='';clearTimeout(timer);
       if(token===generation){busy=false;input.disabled=false;verifying.hidden=true;controller=null;if(dialog.open)input.focus();}
     }
-  });
-  document.addEventListener('pointerup',event=>{
-    if(event.pointerType==='touch'||event.pointerType==='pen')event.target.closest?.('.local-secret')?.classList.toggle('private-revealed');
   });
   window.addEventListener('pagehide',lock);
   window.addEventListener('pageshow',event=>{if(event.persisted)lock();});
