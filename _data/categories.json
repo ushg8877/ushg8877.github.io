@@ -24,6 +24,12 @@
       "name": "笔记",
       "show_articles": false,
       "show_category": true
+    },
+    {
+      "id": "c-140a5453f68f",
+      "name": "小说",
+      "show_articles": false,
+      "show_category": true
     }
   ]
 }
