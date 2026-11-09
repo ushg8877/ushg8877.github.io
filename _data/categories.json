@@ -5,7 +5,19 @@
       "id": "puzzle",
       "name": "Puzzle",
       "show_articles": false,
-      "show_category": false
+      "show_category": true
+    },
+    {
+      "id": "c-55095212882f",
+      "name": "galgame",
+      "show_articles": true,
+      "show_category": true
+    },
+    {
+      "id": "c-de54f5a04ef3",
+      "name": "周记",
+      "show_articles": true,
+      "show_category": true
     }
   ]
 }
