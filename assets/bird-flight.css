@@ -1,42 +1,41 @@
-.bird-trigger{display:block;flex:none;padding:0;border:0;background:none;color:inherit;position:relative;touch-action:manipulation;border-radius:12px;min-width:44px;min-height:44px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.bird-traveler{transform:translate(52px,88px)}
-.bird-facing{transform:scaleX(1);transition:transform .18s ease-out}
-.bird-trigger[data-perch="right"] .bird-traveler{transform:translate(132px,65px)}
-.bird-trigger[data-perch="right"] .bird-facing{transform:scaleX(-1)}
-.bird-trigger[data-flight="right"] .bird-traveler{animation:bird-to-right 1.25s both}
-.bird-trigger[data-flight="left"] .bird-traveler{animation:bird-to-left 1.25s both}
-.bird-trigger[data-flight] .bird-wing{transform-origin:-6px -21px;animation:bird-wingbeat .25s ease-in-out .1s 4}
-.bird-trigger[data-flight] .bird-leg{animation:bird-tuck-feet 1.25s both}
+.bird-trigger{--lily-stem:#83947f;--lily-leaf:#a3b19b;--lily-vein:#7f937d;--lily-petal:#fff8f4;--lily-back:#eddfe7;--lily-edge:#b8a1b4;--lily-blush:#d8b2c7;--lily-pollen:#b49658;display:block;flex:none;padding:0;border:0;background:none;color:inherit;position:relative;touch-action:manipulation;border-radius:12px;min-width:44px;min-height:44px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+[data-theme="dark"] .bird-trigger{--lily-stem:#859985;--lily-leaf:#a1b39b;--lily-vein:#657c6b;--lily-petal:#eee5ed;--lily-back:#b9a6be;--lily-edge:#beabc5;--lily-blush:#ac8eaf;--lily-pollen:#e1c68c}
+.lily-stem{fill:none;stroke:var(--lily-stem);stroke-width:2.1}.lily-leaf{fill:var(--lily-leaf);stroke:none}.lily-leaf-vein{fill:none;stroke:var(--lily-vein);stroke-width:.7;opacity:.55}
+.lily-petals-back{fill:var(--lily-back);stroke:var(--lily-edge);stroke-width:.75}.lily-petals-front{fill:var(--lily-petal);stroke:var(--lily-edge);stroke-width:.8}
+.lily-veins{fill:none;stroke:var(--lily-blush);stroke-width:.85;opacity:.6}.lily-stamens path{fill:none;stroke:var(--lily-pollen);stroke-width:.8}.lily-stamens ellipse{fill:var(--lily-pollen);stroke:none}.lily-heart{fill:var(--lily-stem);stroke:none}
+.lily-left{transform-origin:24px 122px}.lily-right{transform-origin:175px 122px}.lily-stalk{transform-box:view-box}.lily-flower{transform-box:fill-box;transform-origin:center}
+.lily-drifters{pointer-events:none}.lily-drift{fill:var(--lily-petal);stroke:var(--lily-edge);stroke-width:.6;opacity:0;transform-box:fill-box;transform-origin:center}
+.bird-trigger[data-bloom] .lily-left{animation:lily-sway-left 1.8s ease-in-out both}.bird-trigger[data-bloom] .lily-right{animation:lily-sway-right 1.8s ease-in-out both}
+.bird-trigger[data-bloom] .lily-flower{animation:lily-unfold 1.8s ease-in-out both}
+.bird-trigger[data-bloom] .drift-one{animation:lily-petal-one 2.15s .08s ease-out both}.bird-trigger[data-bloom] .drift-two{animation:lily-petal-two 1.9s .25s ease-out both}.bird-trigger[data-bloom] .drift-three{animation:lily-petal-three 1.75s .3s ease-out both}
+.bird-traveler{transform:translate(62px,97px)}.bird-facing{transform:scaleX(1);transition:transform .18s ease-out}
+.bird-trigger[data-perch="right"] .bird-traveler{transform:translate(124px,75px)}.bird-trigger[data-perch="right"] .bird-facing{transform:scaleX(-1)}
+.bird-trigger[data-flight="right"] .bird-traveler{animation:bird-to-right 1.35s both}.bird-trigger[data-flight="left"] .bird-traveler{animation:bird-to-left 1.35s both}
+.bird-trigger[data-flight] .bird-wing{transform-origin:-6px -21px;animation:bird-wingbeat .25s ease-in-out .1s 4}.bird-trigger[data-flight] .bird-leg{animation:bird-tuck-feet 1.35s both}
+@keyframes lily-sway-left{0%,100%{transform:rotate(0)}20%{transform:rotate(-4deg)}48%{transform:rotate(2.5deg)}72%{transform:rotate(-1deg)}}
+@keyframes lily-sway-right{0%,100%{transform:rotate(0)}25%{transform:rotate(3.5deg)}52%{transform:rotate(-2deg)}76%{transform:rotate(.8deg)}}
+@keyframes lily-unfold{0%,100%{transform:scale(1)}32%{transform:scale(1.07)}68%{transform:scale(.99)}}
+@keyframes lily-petal-one{0%{opacity:0;transform:translate(0,0) rotate(0)}12%{opacity:.9}55%{opacity:.7;transform:translate(-15px,20px) rotate(90deg)}100%{opacity:0;transform:translate(-29px,55px) rotate(170deg)}}
+@keyframes lily-petal-two{0%{opacity:0;transform:translate(0,0) rotate(0)}15%{opacity:.8}55%{opacity:.65;transform:translate(7px,24px) rotate(-70deg)}100%{opacity:0;transform:translate(-3px,63px) rotate(-150deg)}}
+@keyframes lily-petal-three{0%{opacity:0;transform:translate(0,0) rotate(0)}15%{opacity:.8}55%{opacity:.6;transform:translate(13px,18px) rotate(-65deg)}100%{opacity:0;transform:translate(22px,48px) rotate(-140deg)}}
 @keyframes bird-to-right{
-  0%{transform:translate(52px,88px);animation-timing-function:ease-in}
-  12%{transform:translate(53px,90px) rotate(5deg);animation-timing-function:ease-out}
-  38%{transform:translate(78px,41px) rotate(-12deg);animation-timing-function:linear}
-  62%{transform:translate(109px,37px) rotate(4deg);animation-timing-function:ease-in}
-  88%{transform:translate(132px,63px) rotate(6deg);animation-timing-function:ease-out}
-  95%{transform:translate(132px,67px) rotate(-2deg);animation-timing-function:ease-out}
-  100%{transform:translate(132px,65px)}
+  0%{transform:translate(62px,97px);animation-timing-function:ease-in}
+  12%{transform:translate(63px,99px) rotate(5deg);animation-timing-function:ease-out}
+  38%{transform:translate(81px,49px) rotate(-12deg);animation-timing-function:linear}
+  62%{transform:translate(106px,43px) rotate(4deg);animation-timing-function:ease-in}
+  88%{transform:translate(124px,72px) rotate(6deg);animation-timing-function:ease-out}
+  95%{transform:translate(124px,77px) rotate(-2deg);animation-timing-function:ease-out}
+  100%{transform:translate(124px,75px)}
 }
 @keyframes bird-to-left{
-  0%{transform:translate(132px,65px);animation-timing-function:ease-in}
-  12%{transform:translate(131px,67px) rotate(-5deg);animation-timing-function:ease-out}
-  38%{transform:translate(108px,36px) rotate(10deg);animation-timing-function:linear}
-  62%{transform:translate(77px,46px) rotate(-5deg);animation-timing-function:ease-in}
-  88%{transform:translate(52px,85px) rotate(-6deg);animation-timing-function:ease-out}
-  95%{transform:translate(52px,90px) rotate(2deg);animation-timing-function:ease-out}
-  100%{transform:translate(52px,88px)}
+  0%{transform:translate(124px,75px);animation-timing-function:ease-in}
+  12%{transform:translate(123px,77px) rotate(-5deg);animation-timing-function:ease-out}
+  38%{transform:translate(106px,43px) rotate(10deg);animation-timing-function:linear}
+  62%{transform:translate(81px,49px) rotate(-5deg);animation-timing-function:ease-in}
+  88%{transform:translate(62px,94px) rotate(-6deg);animation-timing-function:ease-out}
+  95%{transform:translate(62px,99px) rotate(2deg);animation-timing-function:ease-out}
+  100%{transform:translate(62px,97px)}
 }
-@keyframes bird-wingbeat{
-  0%,100%{transform:rotate(0) scale(1)}
-  42%{transform:rotate(95deg) scale(1.55,.85)}
-  75%{transform:rotate(-18deg) scale(.85,.65)}
-}
-@keyframes bird-tuck-feet{
-  0%,100%{opacity:1;transform:translateY(0)}
-  25%,75%{opacity:.2;transform:translateY(-3px)}
-}
-@media(prefers-reduced-motion:reduce){
-  .bird-facing{transition:none}
-  .bird-trigger[data-flight] .bird-traveler,
-  .bird-trigger[data-flight] .bird-wing,
-  .bird-trigger[data-flight] .bird-leg{animation:none}
-}
+@keyframes bird-wingbeat{0%,100%{transform:rotate(0) scale(1)}42%{transform:rotate(95deg) scale(1.55,.85)}75%{transform:rotate(-18deg) scale(.85,.65)}}
+@keyframes bird-tuck-feet{0%,100%{opacity:1;transform:translateY(0)}25%,75%{opacity:.2;transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.bird-facing{transition:none}.bird-trigger[data-flight] .bird-traveler,.bird-trigger[data-flight] .bird-wing,.bird-trigger[data-flight] .bird-leg,.bird-trigger[data-bloom] .lily-stalk,.bird-trigger[data-bloom] .lily-flower,.bird-trigger[data-bloom] .lily-drift{animation:none}.lily-drift{display:none}}

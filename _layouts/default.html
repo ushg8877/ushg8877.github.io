@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="{{ '/assets/layout.css' | relative_url }}?v=20261109-sidebar-1">
   <link rel="stylesheet" href="{{ '/assets/article-engagement.css' | relative_url }}?v=20261018-1">
   <link rel="stylesheet" href="{{ '/assets/sealed-content.css' | relative_url }}?v=20261109-secret-images-1">
-  <link rel="stylesheet" href="{{ '/assets/bird-flight.css' | relative_url }}?v=20261015-branches-1">
+  <link rel="stylesheet" href="{{ '/assets/bird-flight.css' | relative_url }}?v=20261109-lilies-1">
   <script>try{const t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
   {% unless page.access_id %}<link rel="stylesheet" href="{{ "/assets/private-reader.css" | relative_url }}?v=20261109-secret-images-1">{% endunless %}
 </head>
@@ -24,19 +24,36 @@
   <a class="skip" href="#main">跳到正文</a>
   <div class="site-shell">
     <header class="site-rail">
-      <div class="identity"><button class="bird-trigger" id="bird-trigger" type="button" data-perch="left" aria-label="让小鸟飞到右边的枝头"><svg class="identity-mark" viewBox="0 0 196 128" aria-hidden="true"><g class="bird-perches" aria-hidden="true">
-  <g class="bird-perch bird-perch-left">
-    <path class="bird-bough" d="M13 121C22 102 19 77 12 54L14 55C22 78 24 103 16 121Z"/>
-    <path class="bird-twig" d="M19 99C31 93 46 90 69 84M17 79 7 69M21 106 34 100M31 94 32 81"/>
-    <path class="bird-leaf" d="M13 58C4 56 1 47 4 40 12 43 17 50 13 58ZM9 71C2 71-1 64 1 59 8 59 12 65 9 71ZM32 83C26 79 27 72 32 68 37 74 37 79 32 83ZM59 86C58 79 64 74 70 75 69 82 65 86 59 86Z"/>
-    <path class="bird-leaf bird-leaf-light" d="M16 68C15 59 20 52 27 51 28 59 22 66 16 68ZM24 97C22 90 16 86 10 88 11 95 17 98 24 97ZM34 101C36 94 43 93 48 96 44 102 39 104 34 101Z"/>
+      <div class="identity"><button class="bird-trigger" id="bird-trigger" type="button" data-perch="left" aria-label="轻触百合，让小鸟飞到右边"><svg class="identity-mark" viewBox="0 0 196 128" aria-hidden="true"><g class="lily-garden" aria-hidden="true">
+  <g class="lily-stalk lily-left">
+    <path class="lily-stem" d="M22 122C27 105 25 85 28 68L28 55M26 102C37 98 49 95 66 97"/>
+    <path class="lily-leaf" d="M26 91C9 87 8 77 7 72 20 76 25 82 26 91ZM25 108C33 91 42 84 49 84 42 96 34 105 25 108Z"/>
+    <path class="lily-leaf-vein" d="M26 91 12 78M25 108 43 89"/>
+    <g transform="translate(28 52) rotate(-18) scale(.78)"><g class="lily-flower">
+  <g class="lily-petals-back"><path d="M0 3C-11-7-9-22-1-31 8-20 10-7 0 3Z"/><path d="M1 3C-15 5-29-4-31-18-16-18-6-10 1 3Z"/><path d="M-1 3C8-11 22-19 31-17 28-4 15 7-1 3Z"/></g>
+  <g class="lily-petals-front"><path d="M1 3C-8-8-23-11-31-5-26 7-12 16 1 3Z"/><path d="M-1 3C8-9 24-10 31-4 24 10 11 15-1 3Z"/><path d="M0 0C-10 8-9 20-1 26 8 19 10 8 0 0Z"/></g>
+  <path class="lily-veins" d="M0 3-1-24M0 3-24-13M0 3 24-12M0 3-24-2M0 3 24-1M0 3-1 20"/>
+  <g class="lily-stamens"><path d="M0 6-8-8M0 6 0-13M0 6 9-7M0 6-12-1M0 6 13 0"/><ellipse cx="-8" cy="-8" rx="2.4" ry="1.2" transform="rotate(30 -8 -8)"/><ellipse cx="0" cy="-13" rx="1.3" ry="2.6"/><ellipse cx="9" cy="-7" rx="2.4" ry="1.2" transform="rotate(-30 9 -7)"/><ellipse cx="-12" cy="-1" rx="2.4" ry="1.2"/><ellipse cx="13" cy="0" rx="2.4" ry="1.2"/></g>
+  <circle class="lily-heart" cx="0" cy="5" r="2"/>
+</g></g>
   </g>
-  <g class="bird-perch bird-perch-right">
-    <path class="bird-bough" d="M171 121C163 102 167 74 173 53 176 42 175 33 172 23L174 22C178 34 179 43 176 55 170 77 167 102 174 121Z"/>
-    <path class="bird-twig" d="M171 77C160 69 143 64 119 64M175 47 162 36M168 96 180 85M172 62 184 54M156 69 152 54"/>
-    <path class="bird-leaf" d="M173 26C166 23 165 15 169 9 176 13 179 20 173 26ZM163 38C156 38 151 32 153 25 160 25 165 31 163 38ZM152 57C146 54 144 47 148 41 154 45 156 51 152 57ZM177 88C176 81 182 75 188 76 187 82 183 87 177 88Z"/>
-    <path class="bird-leaf bird-leaf-light" d="M175 43C174 35 180 29 187 30 188 38 182 43 175 43ZM181 58C179 51 184 45 190 45 191 51 187 56 181 58ZM166 105C159 103 155 97 157 91 164 92 168 98 166 105ZM124 65C121 59 115 56 109 59 112 65 118 68 124 65Z"/>
+  <g class="lily-stalk lily-right">
+    <path class="lily-stem" d="M176 122C164 102 169 77 163 58L159 39M168 82C154 75 140 74 120 75"/>
+    <path class="lily-leaf" d="M168 82C169 66 179 57 185 54 184 67 177 76 168 82ZM170 105C157 99 148 88 148 80 161 88 167 95 170 105ZM170 101C176 84 186 78 192 77 189 88 179 97 170 101Z"/>
+    <path class="lily-leaf-vein" d="M168 82 181 61M170 105 153 87M170 101 187 83"/>
+    <g transform="translate(159 35) rotate(12)"><g class="lily-flower">
+  <g class="lily-petals-back"><path d="M0 3C-11-7-9-22-1-31 8-20 10-7 0 3Z"/><path d="M1 3C-15 5-29-4-31-18-16-18-6-10 1 3Z"/><path d="M-1 3C8-11 22-19 31-17 28-4 15 7-1 3Z"/></g>
+  <g class="lily-petals-front"><path d="M1 3C-8-8-23-11-31-5-26 7-12 16 1 3Z"/><path d="M-1 3C8-9 24-10 31-4 24 10 11 15-1 3Z"/><path d="M0 0C-10 8-9 20-1 26 8 19 10 8 0 0Z"/></g>
+  <path class="lily-veins" d="M0 3-1-24M0 3-24-13M0 3 24-12M0 3-24-2M0 3 24-1M0 3-1 20"/>
+  <g class="lily-stamens"><path d="M0 6-8-8M0 6 0-13M0 6 9-7M0 6-12-1M0 6 13 0"/><ellipse cx="-8" cy="-8" rx="2.4" ry="1.2" transform="rotate(30 -8 -8)"/><ellipse cx="0" cy="-13" rx="1.3" ry="2.6"/><ellipse cx="9" cy="-7" rx="2.4" ry="1.2" transform="rotate(-30 9 -7)"/><ellipse cx="-12" cy="-1" rx="2.4" ry="1.2"/><ellipse cx="13" cy="0" rx="2.4" ry="1.2"/></g>
+  <circle class="lily-heart" cx="0" cy="5" r="2"/>
+</g></g>
   </g>
+</g>
+<g class="lily-drifters" aria-hidden="true">
+  <g transform="translate(147 37)"><path class="lily-drift drift-one" d="M0 0C-5-2-11-1-12 4-6 8 0 6 0 0Z"/></g>
+  <g transform="translate(174 37)"><path class="lily-drift drift-two" d="M0 0C-3-6-8-8-11-5-9 1-3 4 0 0Z"/></g>
+  <g transform="translate(30 55)"><path class="lily-drift drift-three" d="M0 0C-4-3-9-2-10 2-6 7-1 6 0 0Z"/></g>
 </g>
 <g class="bird-traveler"><g class="bird-facing"><g class="bird-figure">
   <path class="bird-tail" d="M-12-16-25-21C-23-12-19-7-11-7Z"/>
@@ -67,7 +84,7 @@
   {% if page.access_id %}{% include access-dialog.html %}{% else %}{% include private-access.html %}{% endif %}
   <script src="{{ '/assets/site.js' | relative_url }}?v=20261019-no-lyrics-1" defer></script>
   <script src="{{ '/assets/layout.js' | relative_url }}?v=20261109-sidebar-1" defer></script>
-  <script src="{{ '/assets/bird-flight.js' | relative_url }}?v=20261015-branches-1" defer></script>
+  <script src="{{ '/assets/bird-flight.js' | relative_url }}?v=20261109-lilies-1" defer></script>
   {% unless page.private_gateway %}
   <script src="{{ '/assets/article-engagement.js' | relative_url }}?v=20261018-1" defer></script>
   {% endunless %}
