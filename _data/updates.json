@@ -459,6 +459,42 @@
       "summary": "分类",
       "source": "_posts/2026-11-04-yuri-dairy-1.md",
       "url": "/posts/yuri-dairy-1/"
+    },
+    {
+      "id": "607ac3bb348d65a704aab918ec19e3dd",
+      "at": "2026-11-10T11:24:14+08:00",
+      "kind": "update",
+      "title": "那人却在灯火阑珊处",
+      "summary": "标签、分类",
+      "source": "_posts/2026-10-15-koikake.md",
+      "url": "/posts/koikake/"
+    },
+    {
+      "id": "a882fa1adef8664b06d017e595152ed8",
+      "at": "2026-11-10T11:24:14+08:00",
+      "kind": "update",
+      "title": "2025 年 “大鸟杯” galgame 排名",
+      "summary": "分类",
+      "source": "_posts/2026-10-16-2025-bigtori.md",
+      "url": "/posts/2025-bigtori/"
+    },
+    {
+      "id": "2167bd215786b8b0348b3965f8949d3f",
+      "at": "2026-11-10T11:24:14+08:00",
+      "kind": "update",
+      "title": "高代笔记",
+      "summary": "正文",
+      "source": "_posts/2026-10-21-gd-note.md",
+      "url": "/posts/gd-note/"
+    },
+    {
+      "id": "5f0bc30aa431dc821a83a1bf7d49b3b1",
+      "at": "2026-11-10T11:24:14+08:00",
+      "kind": "update",
+      "title": "过往种种、怎忍遗忘",
+      "summary": "标签",
+      "source": "_posts/2026-11-02-ming-ai.md",
+      "url": "/posts/ming-ai/"
     }
   ]
 }
