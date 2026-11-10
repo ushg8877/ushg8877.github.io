@@ -1,12 +1,15 @@
 {%- assign listing_scope = include.scope -%}
 {%- if include.mode == 'pagination' and page.access_id and site.data.puzzles contains page.access_id -%}{%- assign listing_scope = 'puzzles' -%}{%- endif -%}
 {%- include filter-posts.html scope=listing_scope category=include.category -%}
-{%- assign source_posts = listing_posts -%}
+{%- assign source_posts = listing_posts | sort: 'path' -%}
 {%- capture post_keys -%}
   {%- for item in source_posts -%}
-    {%- assign created_seconds = item.created_at | default: item.date | date: '%s' | plus: 0 -%}
-    {%- assign newest_first = 100000000000 | minus: created_seconds | prepend: '000000000000' | slice: -12, 12 -%}
-    {{- newest_first -}}:{{- item.path | url_encode -}}:{{- forloop.index0 -}}/
+    {%- assign priority = item.priority | default: 0 | plus: 0 -%}
+    {%- assign highest_first = 9999 | minus: priority | prepend: '00000' | slice: -5, 5 -%}
+    {%- assign published_seconds = item.first_published_at | default: site.data.publication_history[item.path] | default: item.date | date: '%s' | plus: 0 -%}
+    {%- assign newest_first = 999999999999 | minus: published_seconds | prepend: '0000000000000' | slice: -13, 13 -%}
+    {%- assign path_order = forloop.index0 | prepend: '0000000000' | slice: -10, 10 -%}
+    {{- highest_first -}}:{{- newest_first -}}:{{- path_order -}}/
   {%- endfor -%}
 {%- endcapture -%}
 {%- assign sorted_keys = post_keys | split: '/' | sort -%}

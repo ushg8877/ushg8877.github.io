@@ -1,4 +1,4 @@
-/* Article PDF reader. Only the current page is painted, and only after a reader opens the card. */
+/* Article PDF reader. Pages share a scrollable surface. Rasterize only pages near the viewport. */
 (() => {
   'use strict';
   const assetBase = new URL('./', document.currentScript.src);
@@ -201,10 +201,12 @@
     session.partialPdf?.fill(0);
     session.partialPdf = null;
     session.resize?.disconnect();
-    clearTimeout(session.resizeTimer);
-    session.render?.cancel();
-    wipe(session.pendingCanvas);
-    wipe(session.view.querySelector('canvas'));
+    cancelAnimationFrame(session.frame);
+    if (session.slots) {
+      for (const slot of session.slots.values()) releaseSlot(slot);
+      session.slots.clear();
+    }
+    session.view.replaceChildren();
     // Cancelling a loading task also terminates its worker and pending page requests.
     if (session.loading) Promise.resolve(session.loading.destroy()).catch(() => {});
     session.doc = null;
@@ -261,83 +263,253 @@
     s.prev.disabled = !s.doc || s.page <= 1;
     s.next.disabled = !s.doc || s.page >= s.doc.numPages;
     s.zoom.disabled = s.pageInput.disabled = s.download.disabled = !s.doc;
-    s.pageInput.value = s.page;
+    if (!s.editingPage) s.pageInput.value = s.page;
     if (s.doc) {
       s.total.textContent = '/ ' + s.doc.numPages;
       s.pageInput.max = s.doc.numPages;
     }
   }
 
-  async function paint(session) {
-    if (!current(session) || !session.doc) return;
-    const sequence = ++session.sequence;
-    const wanted = session.page;
-    session.render?.cancel();
-    const valid = () => current(session) && session.sequence === sequence;
-    updateControls(session);
-    session.view.setAttribute('aria-busy', 'true');
-    session.status.textContent = '正在显示第 ' + wanted + ' 页…';
-    let canvas;
+  const pageGap = 12;
+  const inset = 8;
+  const pixelBudget = 12000000;
+
+  function dimensions(page) {
+    const {width, height} = page.getViewport({scale:1});
+    if (!(width > 0 && height > 0 && Number.isFinite(width + height))) throw Error('Invalid page size');
+    return {width, height};
+  }
+
+  function scaledSize(s, number) {
+    const unit = s.units.get(number) || s.defaultUnit;
+    const scale = Math.min(s.zoomValue === 'fit' ? s.available / unit.width : Number(s.zoomValue) * 96/72,
+                           8192 / Math.max(unit.width, unit.height));
+    return {width:Math.max(1, unit.width * scale), height:Math.max(1, unit.height * scale), scale};
+  }
+
+  // Most pages share a paper size. Keep offsets only for pages known to differ
+  // from page one. Even a long document needs just a handful of live DOM nodes.
+  function pageTop(s, number) {
+    let low = 0, high = s.adjustments.length;
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      if (s.adjustments[mid].number < number) low = mid + 1;
+      else high = mid;
+    }
+    return (number - 1) * s.stride + (low ? s.adjustments[low - 1].delta : 0);
+  }
+
+  function pageAt(s, y) {
+    let low = 1, high = s.doc.numPages;
+    while (low < high) {
+      const mid = Math.ceil((low + high) / 2);
+      if (pageTop(s, mid) <= y) low = mid;
+      else high = mid - 1;
+    }
+    return low;
+  }
+
+  function anchor(s) {
+    if (s.jump && Math.abs(s.view.scrollTop - s.jump.top) > 1) s.jump = null;
+    const number = pageAt(s, s.view.scrollTop);
+    const size = scaledSize(s, number);
+    return {
+      number,
+      bottom:s.view.scrollTop > 0 && s.view.scrollTop + s.view.clientHeight >= s.view.scrollHeight-1,
+      y:(s.view.scrollTop - pageTop(s, number)) / size.height,
+      x:(s.view.scrollLeft + s.view.clientWidth/2 - inset - (s.stackWidth - size.width)/2) / size.width,
+    };
+  }
+
+  function releasePaint(slot) {
+    slot.version++;
+    slot.task?.cancel();
+    slot.task = null;
+    wipe(slot.canvas);
+    slot.canvas = null;
+    slot.ready = false;
+    slot.failure?.remove();
+    slot.failure = null;
+  }
+
+  function releaseSlot(slot) {
+    releasePaint(slot);
+    slot.node.remove();
+  }
+
+  function positionSlot(s, slot) {
+    const size = scaledSize(s, slot.number);
+    const density = rasterDensity(s, size);
+    if (slot.scale !== size.scale || slot.density !== density) releasePaint(slot);
+    slot.scale = size.scale;
+    slot.density = density;
+    Object.assign(slot.node.style, {
+      top:pageTop(s, slot.number) + 'px', width:size.width + 'px', height:size.height + 'px',
+      left:Math.max(0,(s.stackWidth - size.width)/2) + 'px',
+    });
+  }
+
+  function layoutPages(s, location) {
+    s.available = Math.max(1,s.view.clientWidth - 2*inset);
+    s.zoomValue = s.zoom.value;
+    const first = scaledSize(s, 1);
+    s.stride = first.height + pageGap;
+    s.stackWidth = Math.max(s.available, first.width);
+    s.adjustments = [];
+    let delta = 0;
+    for (const number of [...s.units.keys()].sort((a,b) => a-b)) {
+      const size = scaledSize(s, number);
+      delta += size.height - first.height;
+      s.adjustments.push({number, delta});
+      s.stackWidth = Math.max(s.stackWidth, size.width);
+    }
+    s.stack.style.width = s.stackWidth + 'px';
+    s.stack.style.height = (pageTop(s, s.doc.numPages + 1) - pageGap) + 'px';
+    s.height = s.view.clientHeight;
+    for (const slot of s.slots.values()) positionSlot(s, slot);
+    if (location) {
+      const size = scaledSize(s, location.number);
+      if (s.jump) s.view.scrollTop = pageTop(s, s.jump.number);
+      else if (location.bottom) s.view.scrollTop = s.view.scrollHeight;
+      else s.view.scrollTop = pageTop(s, location.number) + location.y * size.height;
+      s.view.scrollLeft = (s.stackWidth - size.width)/2 + size.width*location.x + inset - s.view.clientWidth/2;
+      if (s.jump) s.jump.top = s.view.scrollTop;
+    }
+    schedule(s);
+  }
+
+  function schedule(s) {
+    if (!current(s) || s.frame) return;
+    s.frame = requestAnimationFrame(() => {
+      s.frame = 0;
+      if (current(s)) updateWindow(s);
+    });
+  }
+
+  function updateWindow(s) {
+    const top = s.view.scrollTop, height = s.view.clientHeight;
+    const first = pageAt(s, top - inset);
+    const last = pageAt(s, top + height - inset);
+    if (s.jump && Math.abs(top-s.jump.top) > 1) s.jump = null;
+    const bottom = top > 0 && top + height >= s.view.scrollHeight - 1;
+    s.page = s.jump?.number || (bottom ? s.doc.numPages : pageAt(s, top + height/4 - inset));
+    updateControls(s);
+    const from = Math.max(1, first-1), to = Math.min(s.doc.numPages,last+1);
+    for (const [number, slot] of s.slots) {
+      if (number < from || number > to) { releaseSlot(slot); s.slots.delete(number); }
+    }
+    for (let number = to; number >= from; number--) {
+      if (s.slots.has(number)) continue;
+      const node = element('div','pdf-page');
+      node.dataset.pageNumber = number;
+      const slot = {number, node, version:0};
+      positionSlot(s, slot);
+      s.slots.set(number, slot);
+      // Keep the DOM's reading order consistent even when scrolling backwards.
+      s.stack.insertBefore(node, s.slots.get(number+1)?.node || null);
+    }
+    if (s.painting) return;
+    const candidates = [...s.slots.values()].filter(slot => !slot.ready && !slot.failure);
+    candidates.sort((a,b) => Number(b.number>=first && b.number<=last)-Number(a.number>=first && a.number<=last)
+                               || Math.abs(a.number-s.page)-Math.abs(b.number-s.page));
+    if (candidates.length) paintSlot(s,candidates[0]);
+  }
+
+  function rasterDensity(s, size) {
+    // At most four pages straddle the viewport edges or sit just outside.
+    // Interior pages share the remaining budget in proportion to their
+    // heights. The allocation therefore doesn't depend on render order.
+    let limit = Math.min(4000000, pixelBudget / s.doc.numPages);
+    if (s.doc.numPages > 6) {
+      limit = Math.min(pixelBudget/6, pixelBudget/3 * size.height / Math.max(1,s.view.clientHeight));
+    }
+    return Math.min(devicePixelRatio || 1, 2, 4096/Math.max(size.width,size.height),
+                    Math.sqrt(limit / (size.width*size.height)));
+  }
+
+  async function paintSlot(s, slot) {
+    s.painting = true;
+    const attached = () => current(s) && s.slots.get(slot.number) === slot;
+    let page, task;
     try {
-      const page = await session.doc.getPage(wanted);
-      if (!valid()) return;
-      const unit = page.getViewport({scale:1});
-      if (!(unit.width > 0 && unit.height > 0 && Number.isFinite(unit.width + unit.height))) throw Error();
-      const width = Math.max(1, session.view.clientWidth - 16);
-      const zoom = session.zoom.value === 'fit' ? width / unit.width : Number(session.zoom.value) * 96 / 72;
-      const scale = Math.min(zoom, 8192 / Math.max(unit.width, unit.height));
-      const size = page.getViewport({scale});
-      const density = Math.min(devicePixelRatio || 1, 2, 4096 / Math.max(size.width,size.height),
-        Math.sqrt(8000000 / (size.width * size.height)));
-      const viewport = page.getViewport({scale:scale * density});
-      canvas = element('canvas', 'pdf-sheet');
+      page = await s.doc.getPage(slot.number);
+      if (!attached()) return;
+      const unit = dimensions(page);
+      if (!s.units.has(slot.number) && (unit.width !== s.defaultUnit.width || unit.height !== s.defaultUnit.height)) {
+        const location = anchor(s);
+        s.units.set(slot.number, unit);
+        layoutPages(s, location);
+        updateWindow(s);
+        if (!attached()) return;
+      }
+      const version = slot.version;
+      const size = scaledSize(s, slot.number);
+      const viewport = page.getViewport({scale:size.scale*slot.density});
+      const canvas = element('canvas','pdf-sheet');
       canvas.width = Math.max(1, Math.floor(viewport.width));
       canvas.height = Math.max(1, Math.floor(viewport.height));
-      canvas.style.width = size.width + 'px';
-      canvas.style.height = size.height + 'px';
-      canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', 'PDF 第 ' + wanted + ' 页');
-      session.pendingCanvas = canvas;
-      const render = page.render({canvas, viewport, annotationMode:session.lib.AnnotationMode.DISABLE});
-      session.render = render;
-      await render.promise;
-      if (!valid()) return;
-      wipe(session.view.querySelector('canvas'));
-      canvas.dataset.page = wanted;
-      session.view.replaceChildren(canvas);
-      session.view.scrollTo(0, 0);
-      session.pendingCanvas = null;
-      session.render = null;
-      canvas = null;
-      session.status.textContent = '';
-      page.cleanup();
-    } catch {
-      if (valid()) session.status.textContent = '此页暂时无法显示。';
-    } finally {
-      wipe(canvas);
-      if (valid()) {
-        session.pendingCanvas = null;
-        session.render = null;
-        session.view.removeAttribute('aria-busy');
+      canvas.setAttribute('role','img');
+      canvas.setAttribute('aria-label','PDF 第 ' + slot.number + ' 页');
+      slot.canvas = canvas;
+      task = page.render({canvas, viewport, annotationMode:s.lib.AnnotationMode.DISABLE});
+      slot.task = task;
+      await task.promise;
+      if (!attached() || slot.version !== version) return;
+      canvas.dataset.page = slot.number;
+      slot.node.replaceChildren(canvas);
+      slot.ready = true;
+    } catch (error) {
+      if (attached() && (!task || slot.task === task) && error.name !== 'RenderingCancelledException') {
+        releasePaint(slot);
+        slot.failure = element('span','pdf-page-error','第 ' + slot.number + ' 页暂时无法显示。');
+        slot.node.append(slot.failure);
       }
+    } finally {
+      if (slot.task === task) slot.task = null;
+      page?.cleanup();
+      s.painting = false;
+      schedule(s);
     }
   }
 
-  function navigate(session, page) {
-    if (!session.doc) return;
-    const wanted = Number(page);
-    if (!Number.isInteger(wanted) || wanted < 1 || wanted > session.doc.numPages) {
-      session.pageInput.value = session.page;
-      return;
+  function navigate(s, value) {
+    if (!s.stack) return;
+    s.editingPage = false;
+    const number = Number(value);
+    if (Number.isInteger(number) && number >= 1 && number <= s.doc.numPages) {
+      s.view.scrollTop = pageTop(s, number);
+      s.page = number;
+      s.jump = {number, top:s.view.scrollTop};
+      updateWindow(s);
     }
-    if (wanted !== session.page) { session.page = wanted; paint(session); }
+    s.pageInput.value = s.page;
+  }
+
+  async function startPages(s) {
+    const first = await s.doc.getPage(1);
+    assertCurrent(s);
+    s.defaultUnit = dimensions(first);
+    s.slots = new Map();
+    s.units = new Map();
+    s.stack = element('div','pdf-pages');
+    s.view.append(s.stack);
+    layoutPages(s);
+    s.view.addEventListener('scroll', () => schedule(s), {passive:true});
+    s.resize = new ResizeObserver(() => {
+      if (!current(s)) return;
+      if (Math.abs(s.available - (s.view.clientWidth-2*inset)) > .5 || s.height !== s.view.clientHeight) layoutPages(s, anchor(s));
+      else schedule(s);
+    });
+    s.resize.observe(s.view);
+    s.status.textContent = '';
+    updateWindow(s);
   }
 
   async function open(card) {
     let info;
     try { info = readDescriptor(card.dataset.pdf); } catch { drawCard(card); return; }
     close();
-    const session = {card, encoded:card.dataset.pdf, abort:new AbortController(), page:1, sequence:0, downloads:new Set()};
+    const session = {card, encoded:card.dataset.pdf, abort:new AbortController(), page:1, downloads:new Set()};
     active = session;
     session.view = element('div', 'pdf-viewport');
     session.view.tabIndex = 0;
@@ -366,16 +538,7 @@
       session.doc = await session.loading.promise;
       assertCurrent(session);
       if (!session.doc.numPages) throw Error('empty');
-      updateControls(session);
-      let width = session.view.clientWidth;
-      session.resize = new ResizeObserver(() => {
-        if (!current(session) || session.zoom.value !== 'fit' || session.view.clientWidth === width) return;
-        width = session.view.clientWidth;
-        clearTimeout(session.resizeTimer);
-        session.resizeTimer = setTimeout(() => paint(session), 80);
-      });
-      session.resize.observe(session.view);
-      await paint(session);
+      await startPages(session);
     } catch (error) {
       let message = '无法读取 PDF，请检查附件后重试。';
       if (error instanceof AttachmentError) message = error.message;
@@ -440,8 +603,11 @@
   });
   document.addEventListener('change', event => {
     if (!active || !active.card.contains(event.target)) return;
-    if (event.target === active.zoom) paint(active);
+    if (event.target === active.zoom && active.stack) layoutPages(active, anchor(active));
     if (event.target === active.pageInput) navigate(active,active.pageInput.value);
+  });
+  document.addEventListener('input', event => {
+    if (active && event.target === active.pageInput) active.editingPage = true;
   });
   document.addEventListener('keydown', event => {
     if (!active || !active.card.contains(event.target)) return;

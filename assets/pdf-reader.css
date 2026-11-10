@@ -45,7 +45,11 @@
 .pdf-embed .pdf-status { margin: 0; padding: 0 16px 8px; font-size: 13px; }
 .pdf-embed .pdf-status:empty { display: none; }
 .pdf-viewport { overflow: auto; max-height: min(76vh, 950px); min-height: 48px; padding: 8px; background: rgba(127,127,127,.12); border-top: 1px solid var(--line, #dedbe5); }
-.pdf-sheet { display: block; margin: 0 auto; background: white; box-shadow: 0 1px 5px #0002; }
+.pdf-viewport { overflow-anchor: none; scrollbar-gutter: stable; }
+.pdf-pages { position: relative; }
+.pdf-page { position: absolute; overflow: hidden; display: grid; place-items: center; background: white; box-shadow: 0 1px 5px #0002; }
+.pdf-sheet { display: block; width: 100%; height: 100%; }
+.pdf-page-error { color: #555; padding: 12px; }
 .pdf-embed:fullscreen, .pdf-embed[data-pdf-maximized] {
   display: flex; flex-direction: column; width: 100%; height: 100%; margin: 0;
   border: 0; border-radius: 0; padding: max(0px,env(safe-area-inset-top)) max(0px,env(safe-area-inset-right)) max(0px,env(safe-area-inset-bottom)) max(0px,env(safe-area-inset-left));
