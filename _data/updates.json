@@ -495,6 +495,15 @@
       "summary": "标签",
       "source": "_posts/2026-11-02-ming-ai.md",
       "url": "/posts/ming-ai/"
+    },
+    {
+      "id": "ac902d53ccbc535f8730087d434949c8",
+      "at": "2026-11-10T11:34:02+08:00",
+      "kind": "publish",
+      "title": "百合漫画推荐",
+      "summary": "",
+      "source": "_posts/2026-11-10-yuri-manga.md",
+      "url": "/posts/yuri-manga/"
     }
   ]
 }
