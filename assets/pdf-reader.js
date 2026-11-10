@@ -4,7 +4,10 @@
   const assetBase = new URL('./', document.currentScript.src);
   const libraryBase = new URL('pdfjs/', assetBase);
   const selector = 'div.pdf-embed[data-pdf]';
-  const maxBytes = 20 * 1024 * 1024;
+  const legacyLimit = 20 * 1024 * 1024;
+  const maxBytes = 100 * 1024 * 1024;
+  const chunkSize = 8 * 1024 * 1024;
+  const validHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
   const mounted = new WeakSet();
   let libraryPromise;
   let active;
@@ -23,14 +26,21 @@
 
   function readDescriptor(encoded) {
     const value = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(decode(encoded)));
-    if (!value || Object.keys(value).sort().join(',') !== 'bytes,id,iv,key,name,sha256,v' || value.v !== 1 ||
+    if (!value || typeof value !== 'object' ||
         typeof value.id !== 'string' || !/^[a-f0-9]{32}$/.test(value.id) ||
-        typeof value.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.sha256) ||
         !Number.isInteger(value.bytes) || value.bytes < 15 || value.bytes > maxBytes ||
         typeof value.name !== 'string' || [...value.name].length > 160 || /[\/\\:\p{C}]/u.test(value.name) ||
         !/\.pdf$/i.test(value.name)) throw Error();
     decode(value.key, 32);
-    decode(value.iv, 12);
+    const fields = Object.keys(value).sort().join(',');
+    if (value.v === 1 && fields === 'bytes,id,iv,key,name,sha256,v') {
+      if (value.bytes > legacyLimit || !validHash(value.sha256)) throw Error();
+      decode(value.iv, 12);
+    } else if (value.v === 2 && fields === 'bytes,hashes,id,key,name,nonce,v') {
+      if (value.bytes <= legacyLimit || !Array.isArray(value.hashes) ||
+          value.hashes.length !== Math.ceil(value.bytes / chunkSize) || !value.hashes.every(validHash)) throw Error();
+      decode(value.nonce, 8);
+    } else throw Error();
     return value;
   }
 
@@ -111,12 +121,12 @@
     if (!current(session)) throw new DOMException('Closed', 'AbortError');
   }
 
-  async function loadBytes(info, session) {
-    const response = await fetch(new URL('pdfs/media/' + info.id + '.bin', assetBase), {
+  async function fetchCipher(path, expected, session, progress) {
+    assertCurrent(session);
+    const response = await fetch(new URL('pdfs/media/' + path, assetBase), {
       signal:session.abort.signal, redirect:'error', credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store',
     });
     if (!response.ok || !response.body) throw new AttachmentError('PDF 附件暂时无法读取。');
-    const expected = info.bytes + 16;
     const cipher = new Uint8Array(expected);
     const reader = response.body.getReader();
     let length = 0;
@@ -128,25 +138,56 @@
         if (length + value.length > expected) throw new AttachmentError('PDF 附件长度不正确。');
         cipher.set(value, length);
         length += value.length;
-        session.status.textContent = '正在读取 PDF · ' + Math.floor(length * 100 / expected) + '%';
+        progress(length);
       }
     } finally { reader.releaseLock(); }
     if (length !== expected) throw new AttachmentError('PDF 附件不完整。');
-    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', cipher));
-    if ([...digest].map(b => b.toString(16).padStart(2, '0')).join('') !== info.sha256) throw new AttachmentError('PDF 附件校验失败。');
-    assertCurrent(session);
+    return cipher;
+  }
+
+  async function loadBytes(info, session) {
     const secret = decode(info.key, 32);
     let key;
     try { key = await crypto.subtle.importKey('raw', secret, 'AES-GCM', false, ['decrypt']); }
     finally { secret.fill(0); }
-    const plain = new Uint8Array(await crypto.subtle.decrypt({
-      name:'AES-GCM', iv:decode(info.iv, 12), additionalData:new TextEncoder().encode('kamome-pdf:v1:' + info.id),
-    }, key, cipher));
-    if (!current(session) || !/^%PDF-[12]\.\d\s/.test(new TextDecoder().decode(plain.subarray(0, 12)))) {
-      plain.fill(0);
-      throw new AttachmentError('PDF 附件无法读取。');
+    const chunked = info.v === 2;
+    const hashes = chunked ? info.hashes : [info.sha256];
+    const encryptedSize = info.bytes + 16 * hashes.length;
+    let completed = 0, lastPercent = -1;
+    let pdf = chunked ? new Uint8Array(info.bytes) : null;
+    session.partialPdf = pdf;
+    try {
+      for (const [index, hash] of hashes.entries()) {
+        const length = chunked ? Math.min(chunkSize, info.bytes - index * chunkSize) : info.bytes;
+        const path = chunked ? `${info.id}/${index}.bin` : `${info.id}.bin`;
+        const cipher = await fetchCipher(path, length + 16, session, received => {
+          const percent = Math.floor((completed + received) * 100 / encryptedSize);
+          if (percent !== lastPercent) session.status.textContent = `正在读取 PDF · ${percent}%`;
+          lastPercent = percent;
+        });
+        const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', cipher));
+        if ([...digest].map(b => b.toString(16).padStart(2, '0')).join('') !== hash) throw new AttachmentError('PDF 附件校验失败。');
+        assertCurrent(session);
+        const iv = new Uint8Array(12);
+        iv.set(decode(chunked ? info.nonce : info.iv, chunked ? 8 : 12));
+        if (chunked) new DataView(iv.buffer).setUint32(8, index, false);
+        const aad = chunked ? `kamome-pdf:v2:${info.id}:${info.bytes}:${index}` : `kamome-pdf:v1:${info.id}`;
+        const block = new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM', iv, additionalData:new TextEncoder().encode(aad)}, key, cipher));
+        if (chunked) {
+          try { assertCurrent(session); pdf.set(block, index * chunkSize); }
+          finally { block.fill(0); }
+        } else pdf = block;
+        completed += cipher.length;
+      }
+      assertCurrent(session);
+      if (!/^%PDF-[12]\.\d\s/.test(new TextDecoder().decode(pdf.subarray(0, 12)))) throw new AttachmentError('PDF 附件无法读取。');
+      return pdf;
+    } catch (error) {
+      pdf?.fill(0);
+      throw error;
+    } finally {
+      session.partialPdf = null;
     }
-    return plain;
   }
 
   function wipe(canvas) {
@@ -157,6 +198,8 @@
     if (!session || session !== active) return;
     active = null;
     session.abort.abort();
+    session.partialPdf?.fill(0);
+    session.partialPdf = null;
     session.resize?.disconnect();
     clearTimeout(session.resizeTimer);
     session.render?.cancel();
