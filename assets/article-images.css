@@ -1,6 +1,6 @@
 #article-body.prose {
   container-type: inline-size;
-  --article-photo-width: calc(100cqi / 3);
+  --article-photo-width: 50cqi;
 }
 
 @media (max-width: 760px), (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
