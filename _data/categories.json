@@ -30,6 +30,12 @@
       "name": "小说",
       "show_articles": false,
       "show_category": true
+    },
+    {
+      "id": "c-a7713c6598cb",
+      "name": "yuri",
+      "show_articles": true,
+      "show_category": true
     }
   ]
 }
