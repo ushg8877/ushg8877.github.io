@@ -3,7 +3,7 @@
   --article-photo-width: calc(100cqi / 3);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
   #article-body.prose { --article-photo-width: 90cqi; }
 }
 
