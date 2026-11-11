@@ -97,10 +97,12 @@
     const template=document.createElement('template');template.innerHTML=html;
     const allowed=new Set(['P','BR','HR','STRONG','EM','DEL','S','B','I','U','CODE','PRE','BLOCKQUOTE','UL','OL','LI','H1','H2','H3','H4','H5','H6','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','SUP','SUB','A','SPAN','DIV','SECTION','IMG']);
     const classes=new Set(['math-inline','math-display','local-secret','local-secret-inline','local-secret-body','blog-poll']);
-    function copy(source,target) {
-      for(const child of source.childNodes) {
+    function copy(nodes,target) {
+      for(const child of nodes) {
         if(child.nodeType===3){target.append(document.createTextNode(child.textContent));continue;}
-        if(child.nodeType!==1||!allowed.has(child.tagName))continue;
+        if(child.nodeType!==1)continue;
+        if(window.KamomeImageCaptions?.copy(child,target,copy))continue;
+        if(!allowed.has(child.tagName))continue;
         if(child.tagName==='DIV'&&child.classList.contains('pdf-embed')){
           const descriptor=window.KamomePDF?.cleanDescriptor(child.getAttribute('data-pdf'));
           if(descriptor){
@@ -130,10 +132,10 @@
           }catch{}
         }
         if(child.tagName==='OL'&&/^-?\d{1,6}$/.test(child.getAttribute('start')||''))clean.setAttribute('start',child.getAttribute('start'));
-        copy(child,clean);target.append(clean);
+        copy(child.childNodes,clean);target.append(clean);
       }
     }
-    const result=document.createDocumentFragment();copy(template.content,result);return result;
+    const result=document.createDocumentFragment();copy(template.content.childNodes,result);return result;
   }
 
 
@@ -143,7 +145,7 @@ function setupSecrets(root) {
     for (const child of [...parent.childNodes]) {
       if (child.nodeType === 3 && !child.textContent.trim()) continue;
       if (child.nodeType === 1) {
-        if (/^(IMG|BR|HR)$/.test(child.tagName) || child.matches('.pdf-embed')) continue;
+        if (/^(IMG|BR|HR)$/.test(child.tagName) || child.matches('.pdf-embed,.captioned-image')) continue;
         // Keep the mask outside math: KaTeX replaces the math element's children.
         if (!child.hasAttribute('data-tex') && (structure.test(child.tagName) || child.querySelector('img,.pdf-embed'))) {
           maskText(child); continue;

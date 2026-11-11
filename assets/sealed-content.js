@@ -315,10 +315,11 @@
     template.innerHTML = html;
     const allowed = new Set(['P', 'BR', 'HR', 'STRONG', 'EM', 'DEL', 'S', 'B', 'I', 'U', 'CODE', 'PRE', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'SUP', 'SUB', 'A', 'SPAN', 'DIV', 'DL', 'DT', 'DD', 'IMG']);
     const discard = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META', 'BASE', 'PICTURE', 'SOURCE', 'VIDEO', 'AUDIO', 'TRACK', 'SVG', 'MATH', 'FORM', 'INPUT', 'BUTTON', 'TEXTAREA', 'SELECT', 'TEMPLATE']);
-    function copy(source, parent) {
-      for (const child of source.childNodes) {
+    function copy(nodes, parent) {
+      for (const child of nodes) {
         if (child.nodeType === 3) { parent.append(document.createTextNode(child.textContent)); continue; }
         if (child.nodeType !== 1 || discard.has(child.tagName)) continue;
+        if (window.KamomeImageCaptions?.copy(child, parent, copy)) continue;
         if (child.tagName === 'DIV' && child.classList.contains('pdf-embed')) {
           const descriptor = window.KamomePDF?.cleanDescriptor(child.getAttribute('data-pdf'));
           if (descriptor) {
@@ -329,7 +330,7 @@
           }
           continue;
         }
-        if (!allowed.has(child.tagName)) { copy(child, parent); continue; }
+        if (!allowed.has(child.tagName)) { copy(child.childNodes, parent); continue; }
         const tag = /^H[1-6]$/.test(child.tagName) ? 'h3' : child.tagName.toLowerCase();
         const clean = document.createElement(tag);
         if (tag === 'img') {
@@ -364,25 +365,24 @@
         if ((tag === 'span' || tag === 'div') && child.hasAttribute('data-tex') && (child.classList.contains('math-inline') || child.classList.contains('math-display'))) {
           const tex = child.getAttribute('data-tex');
           clean.textContent = child.classList.contains('math-display') ? '\\[' + tex + '\\]' : '\\(' + tex + '\\)';
-        } else copy(child, clean);
+        } else copy(child.childNodes, clean);
         parent.append(clean);
       }
     }
     const fragment = document.createDocumentFragment();
-    copy(template.content, fragment);
+    copy(template.content.childNodes, fragment);
     return fragment;
   }
 
   function wantsReading(state) { return Boolean(master && (state.pinned || (!state.suppressHover && (state.hover || state.focus)))); }
 
   function maskMediaText(parent) {
-    // Preserve image/list/table structure. Only text and image-free inline
-    // subtrees get a mask; revealing an image must never reveal its caption.
+    // Keep authorized pictures and their captions together. Mask surrounding text.
     const structure = /^(P|DIV|BLOCKQUOTE|UL|OL|LI|H[1-6]|TABLE|THEAD|TBODY|TFOOT|TR|TD|TH|DL|DT|DD|PRE)$/;
     for (const child of [...parent.childNodes]) {
       if (child.nodeType === 3 && !child.textContent.trim()) continue;
       if (child.nodeType === 1) {
-        if (/^(IMG|BR|HR)$/.test(child.tagName) || child.matches('.pdf-embed')) continue;
+        if (/^(IMG|BR|HR)$/.test(child.tagName) || child.matches('.pdf-embed,.captioned-image')) continue;
         if (structure.test(child.tagName) || child.querySelector('img,.pdf-embed')) { maskMediaText(child); continue; }
       } else if (child.nodeType !== 3) continue;
       const mask = document.createElement('span');mask.className = 'sealed-line-mask';

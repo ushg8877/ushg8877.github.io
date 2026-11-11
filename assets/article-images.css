@@ -1,0 +1,48 @@
+#article-body.prose img:not(.katex img, mjx-container img) {
+  width: auto;
+  height: auto;
+  max-width: min(100%, 480px);
+  max-height: 320px;
+  object-fit: contain;
+}
+
+#article-body img[data-image-zoom] { cursor: zoom-in; }
+
+.article-image-viewer[open] {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: .75rem;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: max(.85rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(.85rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  border: 0;
+  background: transparent;
+  color: #fff;
+  overscroll-behavior: contain;
+}
+.article-image-viewer::backdrop { background: rgba(17, 18, 22, .95); }
+html:has(.article-image-viewer[open]) { overflow: hidden; }
+.article-image-viewer header { display: flex; align-items: center; justify-content: flex-end; gap: .6rem; }
+.article-image-viewer :is(button, a) {
+  min-height: 40px; padding: .35rem .8rem; border-radius: 6px; border: 1px solid #64646b;
+  background: #2c2c32; color: #fff; font: inherit; font-size: .9rem;
+}
+.article-image-stage {
+  display: flex; overflow: auto; min-width: 0; min-height: 0;
+  overscroll-behavior: contain;
+}
+.article-image-stage img {
+  display: block; flex: none; margin: auto; width: auto; height: auto;
+  max-width: 100%; max-height: 100%; object-fit: contain;
+}
+.article-image-viewer[data-original] img { max-width: none; max-height: none; }
+.article-image-viewer .viewer-caption {
+  margin: 0 auto; max-width: 70ch; max-height: 18vh; overflow: auto;
+  font-size: .9rem; line-height: 1.5; text-align: center; overflow-wrap: anywhere;
+}

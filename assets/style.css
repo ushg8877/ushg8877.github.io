@@ -34,3 +34,25 @@
 .site-footer{flex-wrap:wrap;gap:12px 20px}
 .site-visit-count{font-size:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .site-footer>a{margin-left:auto}
+
+.prose figure.captioned-image {
+  max-width: 100%;
+  margin: 1.5em auto;
+  text-align: center;
+}
+.prose span.captioned-image {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+  text-align: center;
+}
+.prose .captioned-image > img { margin: 0 auto; }
+.prose .captioned-image > figcaption,
+.prose .captioned-image > .image-caption {
+  display: block;
+  padding-top: .4em;
+  color: var(--muted);
+  font-size: .82em;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
