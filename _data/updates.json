@@ -513,6 +513,42 @@
       "summary": "",
       "source": "_posts/2026-11-10-yuri-dairy-2.md",
       "url": "/posts/yuri-dairy-2/"
+    },
+    {
+      "id": "ae53f3e319a943a82766f36a833d54d6",
+      "at": "2026-11-11T16:18:34+08:00",
+      "kind": "update",
+      "title": "高代笔记",
+      "summary": "正文",
+      "source": "_posts/2026-10-21-gd-note.md",
+      "url": "/posts/gd-note/"
+    },
+    {
+      "id": "99dbf16714cfa9140e5d6d2477d156bf",
+      "at": "2026-11-11T16:18:34+08:00",
+      "kind": "update",
+      "title": "百合研究日志 1",
+      "summary": "分类、排序",
+      "source": "_posts/2026-11-04-yuri-dairy-1.md",
+      "url": "/posts/yuri-dairy-1/"
+    },
+    {
+      "id": "a4e26823f6196cb61c2bf9b38bb980de",
+      "at": "2026-11-11T16:18:34+08:00",
+      "kind": "update",
+      "title": "百合研究日志 2",
+      "summary": "分类",
+      "source": "_posts/2026-11-10-yuri-dairy-2.md",
+      "url": "/posts/yuri-dairy-2/"
+    },
+    {
+      "id": "fa2e16fe10913814547eb97d854ba595",
+      "at": "2026-11-11T16:18:34+08:00",
+      "kind": "update",
+      "title": "百合漫画推荐",
+      "summary": "正文、分类",
+      "source": "_posts/2026-11-10-yuri-manga.md",
+      "url": "/posts/yuri-manga/"
     }
   ]
 }
