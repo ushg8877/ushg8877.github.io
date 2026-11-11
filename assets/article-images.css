@@ -1,9 +1,16 @@
+#article-body.prose {
+  container-type: inline-size;
+  --article-photo-width: calc(100cqi / 3);
+}
+
+@media (max-width: 760px) {
+  #article-body.prose { --article-photo-width: 90cqi; }
+}
+
 #article-body.prose img:not(.katex img, mjx-container img) {
-  width: auto;
+  width: var(--article-photo-width);
   height: auto;
-  max-width: min(100%, 480px);
-  max-height: 320px;
-  object-fit: contain;
+  max-width: 100%;
 }
 
 #article-body img[data-image-zoom] { cursor: zoom-in; }
