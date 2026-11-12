@@ -594,6 +594,15 @@
       "summary": "标题",
       "source": "_posts/2026-11-11-my-qol.md",
       "url": "/posts/my-qol/"
+    },
+    {
+      "id": "7b143e1167469ea825f0e00e062156d1",
+      "at": "2026-11-12T20:32:22+08:00",
+      "kind": "update",
+      "title": "高代笔记",
+      "summary": "正文",
+      "source": "_posts/2026-10-21-gd-note.md",
+      "url": "/posts/gd-note/"
     }
   ]
 }
