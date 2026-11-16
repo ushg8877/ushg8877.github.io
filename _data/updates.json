@@ -603,6 +603,15 @@
       "summary": "正文",
       "source": "_posts/2026-10-21-gd-note.md",
       "url": "/posts/gd-note/"
+    },
+    {
+      "id": "accf633f4452272f3852f465ee8e1122",
+      "at": "2026-11-16T14:48:12+08:00",
+      "kind": "publish",
+      "title": "A Touhoku Week",
+      "summary": "",
+      "source": "_posts/2026-11-15-touhoku-week.md",
+      "url": "/posts/touhoku-week/"
     }
   ]
 }
