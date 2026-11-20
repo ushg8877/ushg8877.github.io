@@ -630,6 +630,24 @@
       "summary": "",
       "source": "_posts/2026-11-20-yuri-donjin-2.md",
       "url": "/posts/yuri-donjin-2/"
+    },
+    {
+      "id": "8e4fe92b88bc6843ef4897fc79b5adff",
+      "at": "2026-11-20T15:30:07+08:00",
+      "kind": "update",
+      "title": "数分笔记",
+      "summary": "正文",
+      "source": "_posts/2026-10-19-note.md",
+      "url": "/posts/note/"
+    },
+    {
+      "id": "392c9f6b71b3265ce46a55016bd18565",
+      "at": "2026-11-20T15:30:07+08:00",
+      "kind": "update",
+      "title": "高代笔记",
+      "summary": "正文",
+      "source": "_posts/2026-10-21-gd-note.md",
+      "url": "/posts/gd-note/"
     }
   ]
 }
