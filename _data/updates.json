@@ -693,6 +693,15 @@
       "summary": "分类",
       "source": "_posts/2026-11-24-a-boom-week.md",
       "url": "/posts/a-boom-week/"
+    },
+    {
+      "id": "3d00f4e59b5720195cac389d9e6288d8",
+      "at": "2026-11-25T00:06:58+08:00",
+      "kind": "update",
+      "title": "数分笔记",
+      "summary": "正文",
+      "source": "_posts/2026-10-19-note.md",
+      "url": "/posts/note/"
     }
   ]
 }
