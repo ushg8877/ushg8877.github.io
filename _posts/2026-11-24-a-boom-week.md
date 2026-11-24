@@ -5,8 +5,9 @@ created_at: '2026-11-24T10:55:55+08:00'
 tags: []
 published: true
 access_id: 1b470a6fac790fe96855d6aa20d0497f
-updated_at: '2026-11-25T00:00:57+08:00'
+updated_at: '2026-11-25T00:02:21+08:00'
 first_published_at: '2026-11-25T00:00:58+08:00'
+article_category: c-de54f5a04ef3
 ---
 我愿把 2026 年称为 AI 元年。
 
